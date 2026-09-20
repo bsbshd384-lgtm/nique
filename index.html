@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Unique — Video</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+
+<style>
+*{box-sizing:border-box}
+:root{--bg:#0b0b0b;--card:#151515;--text:#f5f5f5;--muted:#aaa;--line:#292929;--red:#ff0033}
+html,body{margin:0;background:#000;color:var(--text);font-family:Arial,Helvetica,sans-serif}
+body{min-height:100vh}
+button,input{font:inherit}
+button{border:0;color:inherit;background:none;cursor:pointer}
+.app{max-width:700px;margin:auto;min-height:100vh;background:var(--bg);padding-bottom:82px}
+.top{height:58px;display:flex;align-items:center;padding:0 12px;gap:10px;position:sticky;top:0;z-index:20;background:rgba(11,11,11,.96);backdrop-filter:blur(12px)}
+.logo{font-size:23px;font-weight:800;letter-spacing:-1px;margin-right:auto}
+.logo b{color:var(--red)}
+.topBtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center}
+.topBtn:active{background:#222}
+.svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.searchBox{display:none;flex:1;background:#1d1d1d;border-radius:22px;height:40px;padding:0 14px;align-items:center}
+.searchBox input{width:100%;background:none;border:0;outline:0;color:#fff}
+.screen{display:none}
+.screen.active{display:block}
+.chips{display:flex;gap:8px;overflow:auto;padding:9px 12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{background:#242424;padding:8px 14px;border-radius:18px;white-space:nowrap;font-size:13px}
+.chip.active{background:#fff;color:#000}
+.videoCard{border-bottom:1px solid #222;padding-bottom:14px;margin-bottom:12px}
+.thumb{width:100%;aspect-ratio:16/9;background:#222;position:relative;overflow:hidden}
+.thumb img,.short img{width:100%;height:100%;object-fit:cover;display:block}
+.fakeThumb{width:100%;height:100%;display:grid;place-items:center;background:linear-gradient(135deg,#16233b,#663e4c 48%,#111)}
+.playCircle{width:62px;height:62px;border-radius:50%;background:rgba(0,0,0,.65);display:grid;place-items:center}
+.duration{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.85);padding:4px 6px;border-radius:4px;font-size:12px}
+.videoInfo{display:flex;gap:10px;padding:10px 12px 0}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#ff0033,#7b4cff);display:grid;place-items:center;font-weight:800;flex:none}
+.meta{min-width:0;flex:1}
+.title{font-size:16px;font-weight:700;line-height:1.35}
+.sub{color:var(--muted);font-size:13px;margin-top:5px}
+.more{font-size:22px;padding:0 4px}
+.actionRow{display:flex;gap:8px;padding:8px 12px 0;overflow:auto}
+.action{background:#222;border-radius:18px;padding:7px 12px;font-size:13px;white-space:nowrap}
+.action.on{color:#ff3b5b}
+.bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(700px,100%);height:76px;background:#090909;border-top:1px solid #252525;display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;z-index:50}
+.nav{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#aaa;font-size:11px}
+.nav.active{color:#fff}
+.nav.active .svg{stroke:#fff}
+.nav:active{background:#151515}
+.create{width:56px;height:56px;border-radius:50%;background:#20252b;display:grid;place-items:center;margin-top:-8px}
+.create .svg{width:34px;height:34px;stroke-width:1.8}
+.nav.createNav{gap:0}
+.nav.createNav span{display:none}
+.pageTitle{font-size:22px;font-weight:800;padding:14px 14px 4px}
+.empty{padding:55px 25px;text-align:center;color:#888}
+.profileHead{padding:22px 18px;border-bottom:1px solid #222}
+.profileBig{width:82px;height:82px;border-radius:50%;background:linear-gradient(135deg,#ff0033,#743cff);display:grid;place-items:center;font-size:28px;font-weight:800}
+.profileName{font-size:22px;font-weight:800;margin-top:12px}
+.profileId{font-size:12px;color:#777;margin-top:4px;word-break:break-all}
+.profileBtns{display:flex;gap:8px;margin-top:14px}
+.profileBtns button{background:#242424;border-radius:8px;padding:10px 16px}
+.inbox{position:fixed;inset:0;background:#0b0b0b;z-index:80;display:none;overflow:auto}
+.inbox.open{display:block}
+.inboxHead{height:58px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid #222;position:sticky;top:0;background:#0b0b0b;z-index:2}
+.inboxHead b{font-size:20px}
+.back{width:42px}
+.inboxSearch{margin:10px 14px;background:#202020;border-radius:10px;height:40px;display:flex;align-items:center;padding:0 12px}
+.inboxSearch input{background:none;border:0;outline:0;color:#fff;width:100%}
+.notes{padding:12px 14px;display:flex;gap:16px;overflow:auto}
+.note{text-align:center;min-width:62px;font-size:11px;color:#aaa}
+.note .avatar{margin:auto;border:2px solid #fff}
+.msgList{padding:4px 0}
+.msg{display:flex;align-items:center;gap:12px;padding:10px 15px}
+.msg:active{background:#171717}
+.msgText{min-width:0;flex:1}
+.msgName{font-weight:700}
+.msgLast{font-size:12px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.online{width:10px;height:10px;background:#2ee66b;border-radius:50%;margin-left:auto}
+.chat{position:fixed;inset:0;background:#0b0b0b;z-index:100;display:none;flex-direction:column}
+.chat.open{display:flex}
+.chatHead{height:58px;display:flex;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid #222}
+.chatBody{flex:1;overflow:auto;padding:14px}
+.bubble{max-width:75%;padding:9px 12px;border-radius:16px;margin:7px 0;font-size:14px}
+.mine{background:#ff0033;margin-left:auto}
+.theirs{background:#252525}
+.chatSend{display:flex;gap:8px;padding:9px;border-top:1px solid #222}
+.chatSend input{flex:1;background:#202020;border:0;outline:0;border-radius:20px;color:#fff;padding:10px 14px}
+.send{background:#ff0033;border-radius:20px;padding:0 16px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:120;display:none;align-items:center;justify-content:center;padding:18px}
+.modal.open{display:flex}
+.modalCard{width:min(620px,100%);background:#151515;border-radius:14px;overflow:hidden;max-height:90vh}
+.modalTop{display:flex;align-items:center;padding:12px;border-bottom:1px solid #292929}
+.modalTop b{flex:1}
+.player{aspect-ratio:16/9;background:#000;display:grid;place-items:center}
+.player video{width:100%;height:100%;object-fit:contain}
+.comments{max-height:250px;overflow:auto;padding:10px 12px}
+.comment{padding:8px 0;border-bottom:1px solid #222}
+.comment b{font-size:13px}
+.comment p{margin:4px 0;color:#ddd;font-size:13px}
+.commentInput{display:flex;padding:10px;gap:7px}
+.commentInput input{flex:1;background:#222;border:0;border-radius:20px;padding:10px;color:#fff;outline:0}
+.upload{padding:15px}
+.upload input,.upload textarea{width:100%;background:#1e1e1e;color:#fff;border:1px solid #333;border-radius:8px;padding:11px;margin:7px 0;outline:0}
+.primary{width:100%;background:#ff0033;border-radius:8px;padding:12px;margin-top:6px;font-weight:700}
+.progress{height:5px;background:#292929;margin-top:8px;overflow:hidden;display:none}
+.progress i{display:block;height:100%;width:0;background:#ff0033}
+.toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%);background:#eee;color:#111;padding:10px 15px;border-radius:8px;z-index:200;display:none;font-size:13px}
+.toast.show{display:block}
+.shortFeed{background:#000}
+.short{height:calc(100vh - 76px);min-height:560px;position:relative;overflow:hidden;background:#111}
+.short .shortBg{width:100%;height:100%;object-fit:cover}
+.shortOverlay{position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(0,0,0,.8))}
+.shortText{position:absolute;left:14px;bottom:34px;right:80px}
+.shortText b{font-size:17px}
+.shortText p{font-size:13px;margin:8px 0}
+.shortActions{position:absolute;right:10px;bottom:30px;display:flex;flex-direction:column;gap:18px;align-items:center}
+.shortAct{display:flex;flex-direction:column;align-items:center;font-size:12px}
+.shortAct .svg{width:28px;height:28px}
+.createMenu{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:110;align-items:flex-end}
+.createMenu.open{display:flex}
+.createSheet{width:100%;background:#171717;border-radius:20px 20px 0 0;padding:20px 16px 30px}
+.createSheet h3{margin:0 0 15px}
+.createOption{display:flex;align-items:center;gap:14px;padding:15px 8px;border-bottom:1px solid #292929}
+.createIcon{width:42px;height:42px;border-radius:50%;background:#272727;display:grid;place-items:center}
+.hidden{display:none!important}
+@media(min-width:701px){
+ .app{box-shadow:0 0 35px #000}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header class="top">
+  <div class="logo">Unique<b>▶</b></div>
+  <div class="searchBox" id="searchBox">
+    <input id="searchInput" placeholder="Search Unique">
+  </div>
+  <button class="topBtn" onclick="toggleSearch()" aria-label="Search">
+    <svg class="svg"><use href="#i-search"/></svg>
+  </button>
+  <button class="topBtn" onclick="openInbox()" aria-label="Inbox">
+    <svg class="svg"><use href="#i-message"/></svg>
+  </button>
+  <button class="topBtn" onclick="showToast('Notifications')">
+    <svg class="svg"><use href="#i-bell"/></svg>
+  </button>
+</header>
+
+<main id="home" class="screen active">
+  <div class="chips">
+    <button class="chip active" onclick="filterHome('All',this)">All</button>
+    <button class="chip" onclick="filterHome('Gaming',this)">Gaming</button>
+    <button class="chip" onclick="filterHome('Music',this)">Music</button>
+    <button class="chip" onclick="filterHome('Live',this)">Live</button>
+    <button class="chip" onclick="filterHome('News',this)">News</button>
+    <button class="chip" onclick="filterHome('Sports',this)">Sports</button>
+  </div>
+  <div id="videoFeed"></div>
+</main>
+
+<section id="shorts" class="screen shortFeed">
+  <div class="pageTitle">Shorts</div>
+  <div class="short" id="short1">
+    <img class="shortBg" src="https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=900&q=80">
+    <div class="shortOverlay"></div>
+    <div class="shortText"><b>@UniqueGaming</b><p>Gaming highlights 🔥 #gaming #shorts</p></div>
+    <div class="shortActions">
+      <button class="shortAct" onclick="showToast('Liked')"><svg class="svg"><use href="#i-like"/></svg><span>12K</span></button>
+      <button class="shortAct" onclick="showToast('Comments')"><svg class="svg"><use href="#i-comment"/></svg><span>320</span></button>
+      <button class="shortAct" onclick="shareText('Unique Shorts')"><svg class="svg"><use href="#i-share"/></svg><span>Share</span></button>
+      <button class="shortAct" onclick="showToast('More')">•••</button>
+    </div>
+  </div>
+</section>
+
+<section id="subscriptions" class="screen">
+  <div class="pageTitle">Subscriptions</div>
+  <div id="subscriptionFeed" class="empty">তুমি যেসব চ্যানেল Subscribe করবে, তাদের ভিডিও এখানে দেখা যাবে।</div>
+</section>
+
+<section id="you" class="screen">
+  <div class="profileHead">
+    <div class="profileBig" id="profileAvatar">U</div>
+    <div class="profileName" id="profileName">Unique User</div>
+    <div class="profileId" id="profileId">Connecting...</div>
+    <div class="profileBtns">
+      <button onclick="openUpload()">Upload</button>
+      <button onclick="showToast('Settings')">Settings</button>
+    </div>
+  </div>
+  <div class="pageTitle">Your videos</div>
+  <div id="myVideos" class="empty">তোমার আপলোড করা ভিডিও এখানে থাকবে।</div>
+</section>
+
+<nav class="bottom">
+  <button class="nav active" data-screen="home" onclick="go('home',this)">
+    <svg class="svg"><use href="#i-home"/></svg><span>Home</span>
+  </button>
+  <button class="nav" data-screen="shorts" onclick="go('shorts',this)">
+    <svg class="svg"><use href="#i-shorts"/></svg><span>Shorts</span>
+  </button>
+  <button class="nav createNav" onclick="openCreate()">
+    <div class="create"><svg class="svg"><use href="#i-plus"/></svg></div><span></span>
+  </button>
+  <button class="nav" data-screen="subscriptions" onclick="go('subscriptions',this)">
+    <svg class="svg"><use href="#i-sub"/></svg><span>Subscriptions</span>
+  </button>
+  <button class="nav" data-screen="you" onclick="go('you',this)">
+    <svg class="svg"><use href="#i-user"/></svg><span>You</span>
+  </button>
+</nav>
+</div>
+
+<!-- Inbox -->
+<div class="inbox" id="inbox">
+  <div class="inboxHead">
+    <button class="back" onclick="closeInbox()">‹</button>
+    <b>Inbox</b>
+    <button class="topBtn" style="margin-left:auto" onclick="showToast('New message')">✎</button>
+  </div>
+  <div class="inboxSearch">
+    <svg class="svg" style="width:18px"><use href="#i-search"/></svg>
+    <input id="userSearch" placeholder="Search people" oninput="renderUsers()">
+  </div>
+  <div class="notes">
+    <div class="note"><div class="avatar">U</div><div>Your note</div></div>
+    <div class="note"><div class="avatar">A</div><div>Active</div></div>
+    <div class="note"><div class="avatar">R</div><div>Rahim</div></div>
+  </div>
+  <div class="msgList" id="userList"></div>
+</div>
+
+<!-- Chat -->
+<div class="chat" id="chat">
+  <div class="chatHead">
+    <button class="back" onclick="closeChat()">‹</button>
+    <div class="avatar" id="chatAvatar" style="width:34px;height:34px">U</div>
+    <div style="flex:1"><b id="chatName">User</b><div id="chatStatus" style="font-size:11px;color:#777">Unique</div></div>
+    <button class="topBtn" onclick="startCall('audio')">☎</button>
+    <button class="topBtn" onclick="startCall('video')">▣</button>
+  </div>
+  <div class="chatBody" id="chatBody"></div>
+  <div class="chatSend">
+    <input id="messageInput" placeholder="Message..." onkeydown="if(event.key==='Enter')sendMessage()">
+    <button class="send" onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<!-- Video player -->
+<div class="modal" id="videoModal">
+  <div class="modalCard">
+    <div class="modalTop"><b id="playerTitle">Video</b><button onclick="closeVideo()">✕</button></div>
+    <div class="player"><video id="player" controls playsinline></video></div>
+    <div style="padding:10px 12px">
+      <div id="playerMeta" style="color:#aaa;font-size:13px"></div>
+      <div class="actionRow">
+        <button class="action" id="playerLike" onclick="likeCurrent()">♡ Like</button>
+        <button class="action" onclick="showToast('Dislike')">👎</button>
+        <button class="action" onclick="focusComment()">💬 Comment</button>
+        <button class="action" onclick="shareCurrent()">↗ Share</button>
+        <button class="action" onclick="showToast('Saved')">▱ Save</button>
+      </div>
+    </div>
+    <div class="comments" id="comments"></div>
+    <div class="commentInput">
+      <input id="commentInput" placeholder="Add a comment...">
+      <button class="send" onclick="addComment()">Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- Upload -->
+<div class="modal" id="uploadModal">
+  <div class="modalCard">
+    <div class="modalTop"><b>Create / Upload</b><button onclick="closeUpload()">✕</button></div>
+    <div class="upload">
+      <input id="uploadTitle" placeholder="Video title">
+      <textarea id="uploadDesc" rows="3" placeholder="Description"></textarea>
+      <input id="videoFile" type="file" accept="video/*">
+      <div class="progress" id="uploadProgress"><i></i></div>
+      <button class="primary" onclick="uploadVideo()">Upload Video</button>
+      <p style="color:#777;font-size:12px">Firebase Storage চালু ও Storage Rules সেট করা থাকতে হবে।</p>
+    </div>
+  </div>
+</div>
+
+<!-- Create sheet -->
+<div class="createMenu" id="createMenu" onclick="if(event.target===this)closeCreate()">
+  <div class="createSheet">
+    <h3>Create on Unique</h3>
+    <div class="createOption" onclick="closeCreate();openUpload()">
+      <div class="createIcon">＋</div><div><b>Upload a video</b><div style="color:#888;font-size:12px">Phone থেকে ভিডিও আপলোড</div></div>
+    </div>
+    <div class="createOption" onclick="closeCreate();go('shorts',document.querySelector('[data-screen=shorts]'))">
+      <div class="createIcon">▣</div><div><b>Create a Short</b><div style="color:#888;font-size:12px">Shorts feed খুলুন</div></div>
+    </div>
+    <div class="createOption" onclick="closeCreate();showToast('Live feature প্রস্তুত করতে Firebase + server লাগবে')">
+      <div class="createIcon">●</div><div><b>Go live</b><div style="color:#888;font-size:12px">Live streaming</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- SVG icons -->
+<svg style="display:none">
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-6h6v6"/></symbol>
+<symbol id="i-shorts" viewBox="0 0 24 24"><path d="M8 3h8l-4 7h6l-8 11V14H5z"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-sub" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M8 3v4M16 3v4M9 12h6"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c.7-4 3.3-6 8-6s7.3 2 8 6"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+<symbol id="i-message" viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4z"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></symbol>
+<symbol id="i-like" viewBox="0 0 24 24"><path d="M7 10v10H4V10zM7 20h9.5a2 2 0 0 0 2-1.7l1-6a2 2 0 0 0-2-2.3h-4l.6-3.2A2.4 2.4 0 0 0 12 4L7 10"/></symbol>
+<symbol id="i-comment" viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="m4 12 16-8-6 16-3-6z"/><path d="m11 14 9-10"/></symbol>
+</svg>
+
+<script>
+/* =========================
+   FIREBASE
+========================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyDFLpq9_93GL2Mwyu_bn6fcR5uoAGV7tVc",
+  authDomain: "unique-68bf8.firebaseapp.com",
+  databaseURL: "https://unique-68bf8-default-rtdb.firebaseio.com",
+  projectId: "unique-68bf8",
+  storageBucket: "unique-68bf8.firebasestorage.app",
+  messagingSenderId: "1060778605866",
+  appId: "1:1060778605866:web:1e20ecc3e18dd43bd87253",
+  measurementId: "G-293QRPTC72"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth(), db=firebase.database(), storage=firebase.storage();
+
+let uid=null, users={}, currentFriendId=null, currentVideo=null, liked=false, unsubscribeUserListener=null;
+
+const demoVideos=[
+ {id:"demo1",title:"Free Fire Gameplay — IQ Level 999",channel:"Gaming Zone",views:"2.3M views",time:"3 days ago",duration:"18:32",category:"Gaming",thumb:"https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80"},
+ {id:"demo2",title:"Amazing Music Video — New Song",channel:"Unique Music",views:"850K views",time:"1 day ago",duration:"4:21",category:"Music",thumb:"https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1200&q=80"},
+ {id:"demo3",title:"How to Build an App on Mobile",channel:"Code Bangla",views:"430K views",time:"5 days ago",duration:"12:08",category:"Learning",thumb:"https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80"},
+ {id:"demo4",title:"Football Highlights & Best Goals",channel:"Sports Live",views:"1.1M views",time:"6 hours ago",duration:"8:44",category:"Sports",thumb:"https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=1200&q=80"}
+];
+
+auth.onAuthStateChanged(async user=>{
+  if(!user){
+    try{await auth.signInAnonymously()}catch(e){console.error(e);showToast("Firebase Auth চালু নেই");}
+    return;
+  }
+  uid=user.uid;
+  const ref=db.ref("users/"+uid);
+  const snap=await ref.once("value");
+  const old=snap.val()||{};
+  const name=old.name || ("Unique User "+uid.slice(0,5));
+  await ref.update({uid,name,online:true,lastSeen:firebase.database.ServerValue.TIMESTAMP});
+  ref.child("online").onDisconnect().set(false);
+  ref.child("lastSeen").onDisconnect().set(firebase.database.ServerValue.TIMESTAMP);
+  document.getElementById("profileName").textContent=name;
+  document.getElementById("profileAvatar").textContent=name.charAt(0).toUpperCase();
+  document.getElementById("profileId").textContent="ID: "+uid;
+  listenUsers();
+  loadMyVideos();
+});
+
+/* =========================
+   NAVIGATION
+========================= */
+function go(id,btn){
+  document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.querySelectorAll(".nav").forEach(x=>x.classList.remove("active"));
+  if(btn)btn.classList.add("active");
+  if(id==="home")renderFeed("All");
+}
+function toggleSearch(){
+  const box=document.getElementById("searchBox");
+  box.style.display=box.style.display==="flex"?"none":"flex";
+  if(box.style.display==="flex")document.getElementById("searchInput").focus();
+}
+document.getElementById("searchInput").addEventListener("input",e=>{
+  const q=e.target.value.toLowerCase().trim();
+  const list=demoVideos.filter(v=>(v.title+" "+v.channel+" "+v.category).toLowerCase().includes(q));
+  renderVideos(list);
+});
+function filterHome(cat,el){
+  document.querySelectorAll(".chip").forEach(x=>x.classList.remove("active"));
+  el.classList.add("active");
+  renderFeed(cat);
+}
+
+/* =========================
+   HOME FEED
+========================= */
+function renderFeed(cat="All"){
+  let list=cat==="All"?demoVideos:demoVideos.filter(v=>v.category===cat);
+  renderVideos(list);
+}
+function renderVideos(list){
+  const feed=document.getElementById("videoFeed");
+  feed.innerHTML="";
+  if(!list.length){feed.innerHTML='<div class="empty">কোনো ভিডিও পাওয়া যায়নি।</div>';return}
+  list.forEach(v=>{
+    const el=document.createElement("article");
+    el.className="videoCard";
+    el.innerHTML=`
+      <div class="thumb" onclick="openVideo('${v.id}')">
+        <img src="${v.thumb}" alt="">
+        <span class="duration">${v.duration}</span>
+      </div>
+      <div class="videoInfo">
+        <div class="avatar">${v.channel.charAt(0)}</div>
+        <div class="meta">
+          <div class="title">${escapeHtml(v.title)}</div>
+          <div class="sub">${escapeHtml(v.channel)} · ${v.views} · ${v.time}</div>
+        </div>
+        <button class="more" onclick="showToast('More options')">⋮</button>
+      </div>
+      <div class="actionRow">
+        <button class="action" onclick="quickLike(this)">♡ Like</button>
+        <button class="action" onclick="showToast('Comments')">💬 Comments</button>
+        <button class="action" onclick="shareText('${escapeAttr(v.title)}')">↗ Share</button>
+        <button class="action" onclick="subscribeChannel('${escapeAttr(v.channel)}')">Subscribe</button>
+      </div>`;
+    feed.appendChild(el);
+  });
+}
+renderFeed();
+
+function quickLike(btn){btn.classList.toggle("on");btn.textContent=btn.classList.contains("on")?"♥ Liked":"♡ Like"}
+function subscribeChannel(name){
+  if(!uid){showToast("অপেক্ষা করুন...");return}
+  db.ref("subscriptions/"+uid+"/"+safeKey(name)).set({channel:name,at:firebase.database.ServerValue.TIMESTAMP})
+    .then(()=>{showToast(name+" subscribed");loadSubscriptions()});
+}
+function safeKey(s){return btoa(unescape(encodeURIComponent(s))).replace(/[.#$[\]/]/g,"_").slice(0,80)}
+
+/* =========================
+   VIDEO PLAYER + COMMENTS
+========================= */
+function openVideo(id){
+  currentVideo=demoVideos.find(v=>v.id===id);
+  if(!currentVideo)return;
+  document.getElementById("videoModal").classList.add("open");
+  document.getElementById("playerTitle").textContent=currentVideo.title;
+  document.getElementById("playerMeta").textContent=currentVideo.channel+" · "+currentVideo.views;
+  const p=document.getElementById("player");
+  if(currentVideo.url){p.src=currentVideo.url;p.play().catch(()=>{})}
+  else{p.removeAttribute("src");p.poster=currentVideo.thumb}
+  loadComments(currentVideo.id);
+}
+function closeVideo(){
+  const p=document.getElementById("player");p.pause();p.removeAttribute("src");
+  document.getElementById("videoModal").classList.remove("open");
+}
+function likeCurrent(){
+  liked=!liked;
+  document.getElementById("playerLike").textContent=liked?"♥ Liked":"♡ Like";
+}
+function focusComment(){document.getElementById("commentInput").focus()}
+function shareCurrent(){shareText(currentVideo?.title||"Unique video")}
+async function shareText(text){
+  try{if(navigator.share)await navigator.share({title:"Unique",text});else await navigator.clipboard.writeText(text);showToast("Shared / copied")}
+  catch(e){showToast("Share cancelled")}
+}
+function loadComments(videoId){
+  const box=document.getElementById("comments");
+  box.innerHTML="";
+  db.ref("comments/"+videoId).limitToLast(50).on("value",snap=>{
+    box.innerHTML="";
+    snap.forEach(c=>{
+      const x=c.val();
+      box.innerHTML+=`<div class="comment"><b>${escapeHtml(x.name||"User")}</b><p>${escapeHtml(x.text||"")}</p></div>`;
+    });
+  });
+}
+function addComment(){
+  if(!uid||!currentVideo)return;
+  const input=document.getElementById("commentInput"),text=input.value.trim();
+  if(!text)return;
+  db.ref("comments/"+currentVideo.id).push({uid,name:document.getElementById("profileName").textContent,text,at:firebase.database.ServerValue.TIMESTAMP});
+  input.value="";
+}
+
+/* =========================
+   SUBSCRIPTIONS
+========================= */
+function loadSubscriptions(){
+  if(!uid)return;
+  db.ref("subscriptions/"+uid).once("value").then(s=>{
+    const box=document.getElementById("subscriptionFeed");
+    if(!s.exists()){box.className="empty";box.textContent="তুমি যেসব চ্যানেল Subscribe করবে, তাদের ভিডিও এখানে দেখা যাবে।";return}
+    box.className="";
+    box.innerHTML="";
+    s.forEach(x=>{
+      const ch=x.val().channel;
+      box.innerHTML+=`<div style="padding:15px;border-bottom:1px solid #222"><b>${escapeHtml(ch)}</b><div style="color:#888;font-size:12px;margin-top:4px">Subscribed channel</div></div>`;
+    });
+  });
+}
+
+/* =========================
+   UPLOAD TO FIREBASE STORAGE
+========================= */
+function openCreate(){document.getElementById("createMenu").classList.add("open")}
+function closeCreate(){document.getElementById("createMenu").classList.remove("open")}
+function openUpload(){document.getElementById("uploadModal").classList.add("open")}
+function closeUpload(){document.getElementById("uploadModal").classList.remove("open")}
+async function uploadVideo(){
+  if(!uid){showToast("Firebase login হচ্ছে...");return}
+  const file=document.getElementById("videoFile").files[0];
+  const title=document.getElementById("uploadTitle").value.trim();
+  const desc=document.getElementById("uploadDesc").value.trim();
+  if(!file||!title){showToast("Title এবং video দিন");return}
+  const progress=document.getElementById("uploadProgress"),bar=progress.querySelector("i");
+  progress.style.display="block";
+  try{
+    const path="videos/"+uid+"/"+Date.now()+"_"+file.name.replace(/[^\w.\-]/g,"_");
+    const task=storage.ref(path).put(file);
+    task.on("state_changed",
+      s=>bar.style.width=((s.bytesTransferred/s.totalBytes)*100)+"%",
+      e=>{console.error(e);showToast("Upload failed — Storage Rules দেখুন")},
+      async()=>{
+        const url=await task.snapshot.ref.getDownloadURL();
+        await db.ref("videos").push({
+          uid,title,description:desc,url,
+          channel:document.getElementById("profileName").textContent,
+          views:0,likes:0,createdAt:firebase.database.ServerValue.TIMESTAMP
+        });
+        showToast("Video uploaded");
+        document.getElementById("uploadTitle").value="";
+        document.getElementById("uploadDesc").value="";
+        document.getElementById("videoFile").value="";
+        progress.style.display="none";bar.style.width="0";
+        closeUpload();loadMyVideos();loadAllVideos();
+      }
+    );
+  }catch(e){console.error(e);showToast("Upload failed")}
+}
+function loadMyVideos(){
+  if(!uid)return;
+  db.ref("videos").orderByChild("uid").equalTo(uid).once("value").then(s=>{
+    const box=document.getElementById("myVideos");
+    if(!s.exists()){box.className="empty";box.textContent="তোমার আপলোড করা ভিডিও এখানে থাকবে।";return}
+    box.className="";
+    box.innerHTML="";
+    s.forEach(c=>{
+      const v=c.val();
+      box.innerHTML+=`<div style="padding:14px;border-bottom:1px solid #222"><b>${escapeHtml(v.title)}</b><div style="color:#888;font-size:12px">${v.views||0} views</div></div>`;
+    });
+  });
+}
+async function loadAllVideos(){
+  const s=await db.ref("videos").limitToLast(50).once("value");
+  s.forEach(c=>{
+    const v=c.val();
+    demoVideos.unshift({id:c.key,title:v.title,channel:v.channel||"Unique Creator",views:(v.views||0)+" views",time:"recent",duration:"",category:"All",thumb:"",url:v.url});
+  });
+  renderFeed("All");
+}
+
+/* =========================
+   INBOX / REAL USERS
+========================= */
+function openInbox(){document.getElementById("inbox").classList.add("open");renderUsers()}
+function closeInbox(){document.getElementById("inbox").classList.remove("open")}
+function listenUsers(){
+  db.ref("users").on("value",snap=>{
+    users={};
+    snap.forEach(c=>{users[c.key]=c.val()});
+    renderUsers();
+  });
+}
+function renderUsers(){
+  const box=document.getElementById("userList"),q=(document.getElementById("userSearch")?.value||"").toLowerCase().trim();
+  box.innerHTML="";
+  Object.keys(users).filter(id=>id!==uid).forEach(id=>{
+    const u=users[id],name=u.name||"Unique User";
+    if(q&&!name.toLowerCase().includes(q)&&!id.toLowerCase().includes(q))return;
+    const row=document.createElement("div");row.className="msg";
+    row.onclick=()=>openChat(name,id);
+    row.innerHTML=`<div class="avatar">${name.charAt(0).toUpperCase()}</div><div class="msgText"><div class="msgName">${escapeHtml(name)}</div><div class="msgLast">${u.online?"Active now":"Offline"}</div></div>${u.online?'<span class="online"></span>':''}`;
+    box.appendChild(row);
+  });
+  if(!box.children.length)box.innerHTML='<div class="empty">অন্য Unique user এখানে দেখাবে। অন্য ফোনে একই Firebase project দিয়ে app খুলুন।</div>';
+}
+function openChat(name,id){
+  currentFriendId=id;
+  document.getElementById("chatName").textContent=name;
+  document.getElementById("chatAvatar").textContent=name.charAt(0).toUpperCase();
+  document.getElementById("chat").classList.add("open");
+  listenMessages();
+}
+function closeChat(){document.getElementById("chat").classList.remove("open")}
+function chatId(a,b){return[a,b].sort().join("_")}
+let msgListener=null;
+function listenMessages(){
+  if(!uid||!currentFriendId)return;
+  const ref=db.ref("messages/"+chatId(uid,currentFriendId));
+  if(msgListener)ref.off("value",msgListener);
+  msgListener=snap=>{
+    const box=document.getElementById("chatBody");box.innerHTML="";
+    snap.forEach(c=>{
+      const m=c.val(),d=document.createElement("div");
+      d.className="bubble "+(m.uid===uid?"mine":"theirs");
+      d.textContent=m.text||"";
+      box.appendChild(d);
+    });
+    box.scrollTop=box.scrollHeight;
+  };
+  ref.limitToLast(100).on("value",msgListener);
+}
+function sendMessage(){
+  if(!uid||!currentFriendId)return;
+  const input=document.getElementById("messageInput"),text=input.value.trim();
+  if(!text)return;
+  db.ref("messages/"+chatId(uid,currentFriendId)).push({uid,text,at:firebase.database.ServerValue.TIMESTAMP});
+  input.value="";
+}
+
+/* =========================
+   BASIC CALL SIGNALING
+========================= */
+let localStream=null,pc=null,currentCallId=null;
+const rtcConfig={iceServers:[
+  {urls:"stun:stun.l.google.com:19302"},
+  {urls:"stun:stun1.l.google.com:19302"}
+]};
+async function startCall(type){
+  if(!currentFriendId){showToast("আগে একজন user-এর chat খুলুন");return}
+  if(!window.isSecureContext||!navigator.mediaDevices){showToast("Call-এর জন্য HTTPS/secure preview দরকার");return}
+  try{
+    localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:type==="video"});
+    pc=new RTCPeerConnection(rtcConfig);
+    localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+    currentCallId=uid+"_"+Date.now();
+    const ref=db.ref("calls/"+currentCallId);
+    pc.onicecandidate=e=>{if(e.candidate)ref.child("callerCandidates").push(e.candidate.toJSON())};
+    const offer=await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    await ref.set({caller:uid,receiver:currentFriendId,type,offer:{type:offer.type,sdp:offer.sdp},status:"ringing",createdAt:firebase.database.ServerValue.TIMESTAMP});
+    showToast("Calling...");
+    ref.child("answer").on("value",async s=>{
+      const a=s.val();
+      if(a&&!pc.currentRemoteDescription)await pc.setRemoteDescription(new RTCSessionDescription(a));
+    });
+    ref.child("calleeCandidates").on("child_added",s=>{
+      if(s.val())pc.addIceCandidate(new RTCIceCandidate(s.val())).catch(()=>{});
+    });
+  }catch(e){console.error(e);showToast("Camera/Mic permission দিন")}
+}
+async function acceptCall(callId){
+  showToast("Incoming call feature ready — accept UI can be connected here");
+}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function escapeAttr(s){return String(s??"").replace(/'/g,"\\'")}
+function showToast(t){
+  const x=document.getElementById("toast");x.textContent=t;x.classList.add("show");
+  clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>x.classList.remove("show"),2200);
+}
+</script>
+</body>
+</html>
