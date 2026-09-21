@@ -11,18 +11,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Setup Java 17
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Create Android project
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.9'
+
+      - name: Create Android Project
         shell: bash
         run: |
+
           mkdir -p app/src/main/java/com/unique/app
           mkdir -p app/src/main/res/values
           mkdir -p app/src/main/assets
@@ -59,6 +66,7 @@ jobs:
           cat > gradle.properties <<'EOF'
           org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
           android.useAndroidX=true
+          android.nonTransitiveRClass=true
           EOF
 
           cat > app/build.gradle <<'EOF'
@@ -80,13 +88,32 @@ jobs:
           }
 
           dependencies {
-              implementation 'androidx.appcompat:appcompat:1.7.0'
               implementation 'androidx.webkit:webkit:1.12.1'
           }
           EOF
 
+          cat > app/src/main/res/values/styles.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+
+              <style name="AppTheme"
+                  parent="android:style/Theme.Material.Light.NoActionBar">
+
+                  <item name="android:fontFamily">sans</item>
+                  <item name="android:windowActionModeOverlay">true</item>
+                  <item name="android:colorAccent">#ff0000</item>
+                  <item name="android:navigationBarColor">#000000</item>
+                  <item name="android:statusBarColor">#000000</item>
+                  <item name="android:windowLightStatusBar">false</item>
+
+              </style>
+
+          </resources>
+          EOF
+
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
+
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
               <uses-permission android:name="android.permission.INTERNET"/>
@@ -94,15 +121,16 @@ jobs:
               <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
               <application
-                  android:theme="@style/AppTheme"
-                  android:label="Unique"
+                  android:allowBackup="true"
+                  android:hardwareAccelerated="true"
                   android:usesCleartextTraffic="true"
-                  android:hardwareAccelerated="true">
+                  android:label="Unique"
+                  android:theme="@style/AppTheme">
 
                   <activity
                       android:name=".MainActivity"
-                      android:screenOrientation="portrait"
-                      android:exported="true">
+                      android:exported="true"
+                      android:screenOrientation="portrait">
 
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN"/>
@@ -112,21 +140,8 @@ jobs:
                   </activity>
 
               </application>
-          </manifest>
-          EOF
 
-          cat > app/src/main/res/values/styles.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
-                  <item name="android:fontFamily">sans</item>
-                  <item name="android:windowActionModeOverlay">true</item>
-                  <item name="android:colorAccent">#ff0000</item>
-                  <item name="android:navigationBarColor">#000000</item>
-                  <item name="android:statusBarColor">#000000</item>
-                  <item name="android:windowLightStatusBar">false</item>
-              </style>
-          </resources>
+          </manifest>
           EOF
 
           cat > app/src/main/java/com/unique/app/MainActivity.java <<'EOF'
@@ -142,7 +157,6 @@ jobs:
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
 
-          import androidx.annotation.Nullable;
           import androidx.webkit.WebViewAssetLoader;
 
           public class MainActivity extends Activity {
@@ -179,19 +193,29 @@ jobs:
                           .build();
 
                   webView.setWebViewClient(new WebViewClient() {
+
                       @Override
                       public WebResourceResponse shouldInterceptRequest(
                               WebView view,
                               WebResourceRequest request) {
-                          return assetLoader.shouldInterceptRequest(request.getUrl());
+
+                          return assetLoader.shouldInterceptRequest(
+                              request.getUrl()
+                          );
                       }
                   });
 
                   webView.setWebChromeClient(new WebChromeClient() {
+
                       @Override
-                      public void onPermissionRequest(final PermissionRequest request) {
-                          runOnUiThread(() -> {
-                              request.grant(request.getResources());
+                      public void onPermissionRequest(
+                              final PermissionRequest request) {
+
+                          runOnUiThread(new Runnable() {
+                              @Override
+                              public void run() {
+                                  request.grant(request.getResources());
+                              }
                           });
                       }
                   });
@@ -205,6 +229,7 @@ jobs:
 
               @Override
               public void onBackPressed() {
+
                   if (webView.canGoBack()) {
                       webView.goBack();
                   } else {
@@ -214,16 +239,28 @@ jobs:
           }
           EOF
 
-      - name: Install Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
+      - name: Check Project
+        run: |
+          echo "Checking Unique project..."
+          test -f index.html
+          test -f app/src/main/assets/index.html
+          test -f app/src/main/AndroidManifest.xml
+          test -f app/src/main/java/com/unique/app/MainActivity.java
+          echo "Project files OK"
 
-      - name: Build APK
-        run: gradle assembleDebug --no-daemon
+      - name: Build Debug APK
+        run: |
+          gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Check APK
+        run: |
+          ls -lh app/build/outputs/apk/debug/
+          test -f app/build/outputs/apk/debug/app-debug.apk
+          echo "APK BUILD SUCCESS"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Unique-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
