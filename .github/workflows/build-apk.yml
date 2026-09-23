@@ -18,7 +18,7 @@ jobs:
       - name: Check index.html
         run: |
           test -f index.html
-          echo "index.html found"
+          echo "index.html found successfully"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -37,6 +37,10 @@ jobs:
 
           cp index.html app/src/main/assets/index.html
 
+          # =========================
+          # SETTINGS
+          # =========================
+
           cat > settings.gradle <<'EOF'
           pluginManagement {
               repositories {
@@ -47,7 +51,10 @@ jobs:
           }
 
           dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositoriesMode.set(
+                  RepositoriesMode.FAIL_ON_PROJECT_REPOS
+              )
+
               repositories {
                   google()
                   mavenCentral()
@@ -55,8 +62,13 @@ jobs:
           }
 
           rootProject.name = "Unique"
+
           include(":app")
           EOF
+
+          # =========================
+          # PROJECT GRADLE
+          # =========================
 
           cat > build.gradle <<'EOF'
           plugins {
@@ -64,10 +76,18 @@ jobs:
           }
           EOF
 
+          # =========================
+          # GRADLE PROPERTIES
+          # =========================
+
           cat > gradle.properties <<'EOF'
           org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
-          android.useAndroidX=true
+          android.useAndroidX=false
           EOF
+
+          # =========================
+          # APP GRADLE
+          # =========================
 
           cat > app/build.gradle <<'EOF'
           plugins {
@@ -75,43 +95,93 @@ jobs:
           }
 
           android {
+
               namespace 'com.unique.app'
+
               compileSdk 36
 
               defaultConfig {
+
                   applicationId "com.unique.app"
+
                   minSdk 23
+
                   targetSdk 36
+
                   versionCode 1
+
                   versionName "1.0"
+              }
+
+              buildTypes {
+
+                  debug {
+                      minifyEnabled false
+                  }
+
+                  release {
+                      minifyEnabled false
+                      shrinkResources false
+                  }
               }
           }
 
           dependencies {
-              implementation 'androidx.appcompat:appcompat:1.7.1'
-              implementation 'androidx.webkit:webkit:1.14.0'
           }
           EOF
 
+          # =========================
+          # COLORS
+          # =========================
+
           cat > app/src/main/res/values/colors.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
+
           <resources>
-              <color name="unique_black">#050508</color>
+
+              <color name="unique_black">
+                  #050508
+              </color>
+
           </resources>
           EOF
 
+          # =========================
+          # APP THEME
+          # =========================
+
           cat > app/src/main/res/values/styles.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
+
           <resources>
 
-              <style name="AppTheme"
+              <style
+                  name="AppTheme"
                   parent="android:style/Theme.Material.Light.NoActionBar">
 
-                  <item name="android:fontFamily">sans</item>
-                  <item name="android:colorAccent">#FF0080</item>
-                  <item name="android:navigationBarColor">#000000</item>
-                  <item name="android:statusBarColor">#050508</item>
-                  <item name="android:windowLightStatusBar">false</item>
+                  <item name="android:fontFamily">
+                      sans
+                  </item>
+
+                  <item name="android:colorAccent">
+                      #FF0080
+                  </item>
+
+                  <item name="android:navigationBarColor">
+                      #000000
+                  </item>
+
+                  <item name="android:statusBarColor">
+                      #050508
+                  </item>
+
+                  <item name="android:windowLightStatusBar">
+                      false
+                  </item>
+
+                  <item name="android:windowActionModeOverlay">
+                      true
+                  </item>
 
               </style>
 
@@ -119,7 +189,7 @@ jobs:
           EOF
 
           # =========================
-          # UNIQUE APP LOGO
+          # UNIQUE OUTSIDE APP LOGO
           # =========================
 
           cat > app/src/main/res/drawable/ic_unique_logo.xml <<'EOF'
@@ -132,7 +202,7 @@ jobs:
               android:viewportWidth="512"
               android:viewportHeight="512">
 
-              <!-- Black rounded background -->
+              <!-- BLACK BACKGROUND -->
 
               <path
                   android:fillColor="#050508"
@@ -146,9 +216,9 @@ jobs:
                   Q0,512 0,402
                   L0,110
                   Q0,0 110,0
-                  Z"/>
+                  Z" />
 
-              <!-- U -->
+              <!-- BLUE U -->
 
               <path
                   android:fillColor="#00E5FF"
@@ -163,9 +233,9 @@ jobs:
                   L367,295
                   Q367,412 256,412
                   Q145,412 145,295
-                  Z"/>
+                  Z" />
 
-              <!-- Play symbol -->
+              <!-- PINK PLAY -->
 
               <path
                   android:fillColor="#FF0080"
@@ -173,7 +243,7 @@ jobs:
                   M350,105
                   L425,160
                   L350,215
-                  Z"/>
+                  Z" />
 
           </vector>
           EOF
@@ -189,34 +259,43 @@ jobs:
               xmlns:android="http://schemas.android.com/apk/res/android">
 
               <uses-permission
-                  android:name="android.permission.INTERNET"/>
+                  android:name="android.permission.INTERNET" />
 
               <uses-permission
-                  android:name="android.permission.CAMERA"/>
+                  android:name="android.permission.CAMERA" />
 
               <uses-permission
-                  android:name="android.permission.RECORD_AUDIO"/>
+                  android:name="android.permission.RECORD_AUDIO" />
 
               <application
+
                   android:theme="@style/AppTheme"
+
                   android:label="Unique"
+
                   android:icon="@drawable/ic_unique_logo"
+
                   android:roundIcon="@drawable/ic_unique_logo"
+
                   android:usesCleartextTraffic="true"
+
                   android:hardwareAccelerated="true">
 
                   <activity
+
                       android:name=".MainActivity"
+
                       android:screenOrientation="portrait"
+
                       android:exported="true">
 
                       <intent-filter>
 
                           <action
-                              android:name="android.intent.action.MAIN"/>
+                              android:name="android.intent.action.MAIN" />
 
                           <category
-                              android:name="android.intent.category.LAUNCHER"/>
+                              android:name="android.intent.category.LAUNCHER" />
 
                       </intent-filter>
 
@@ -237,7 +316,6 @@ jobs:
           import android.Manifest;
           import android.app.Activity;
           import android.os.Bundle;
-
           import android.webkit.PermissionRequest;
           import android.webkit.WebChromeClient;
           import android.webkit.WebResourceRequest;
@@ -245,7 +323,7 @@ jobs:
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
 
-          import androidx.webkit.WebViewAssetLoader;
+          import java.io.InputStream;
 
           public class MainActivity extends Activity {
 
@@ -257,7 +335,7 @@ jobs:
                   super.onCreate(savedInstanceState);
 
                   requestPermissions(
-                      new String[]{
+                      new String[] {
                           Manifest.permission.CAMERA,
                           Manifest.permission.RECORD_AUDIO
                       },
@@ -266,26 +344,27 @@ jobs:
 
                   webView = new WebView(this);
 
-                  webView.getSettings().setJavaScriptEnabled(true);
-                  webView.getSettings().setDomStorageEnabled(true);
-                  webView.getSettings().setDatabaseEnabled(true);
+                  webView.getSettings()
+                      .setJavaScriptEnabled(true);
+
+                  webView.getSettings()
+                      .setDomStorageEnabled(true);
+
+                  webView.getSettings()
+                      .setDatabaseEnabled(true);
 
                   webView.getSettings()
                       .setMediaPlaybackRequiresUserGesture(false);
 
-                  webView.getSettings().setAllowFileAccess(true);
-                  webView.getSettings().setAllowContentAccess(true);
+                  webView.getSettings()
+                      .setAllowFileAccess(true);
 
-                  WebViewAssetLoader assetLoader =
-                      new WebViewAssetLoader.Builder()
+                  webView.getSettings()
+                      .setAllowContentAccess(true);
 
-                          .addPathHandler(
-                              "/assets/",
-                              new WebViewAssetLoader
-                                  .AssetsPathHandler(this)
-                          )
-
-                          .build();
+                  /*
+                   * Load index.html from Android assets.
+                   */
 
                   webView.setWebViewClient(
                       new WebViewClient() {
@@ -297,10 +376,57 @@ jobs:
                               WebResourceRequest request
                           ) {
 
-                              return assetLoader
-                                  .shouldInterceptRequest(
-                                      request.getUrl()
-                                  );
+                              String url =
+                                  request.getUrl().toString();
+
+                              if (
+                                  url.startsWith(
+                                      "https://appassets.androidplatform.net/"
+                                  )
+                              ) {
+
+                                  try {
+
+                                      String path =
+                                          request.getUrl()
+                                              .getPath();
+
+                                      if (
+                                          path == null ||
+                                          path.equals("/")
+                                      ) {
+
+                                          path =
+                                              "/index.html";
+                                      }
+
+                                      if (
+                                          path.startsWith(
+                                              "/assets/"
+                                          )
+                                      ) {
+
+                                          path =
+                                              path.substring(8);
+                                      }
+
+                                      InputStream input =
+                                          getAssets()
+                                              .open(path);
+
+                                      return new WebResourceResponse(
+                                          "text/html",
+                                          "UTF-8",
+                                          input
+                                      );
+
+                                  } catch (Exception e) {
+
+                                      return null;
+                                  }
+                              }
+
+                              return null;
                           }
                       }
                   );
@@ -313,19 +439,25 @@ jobs:
                               final PermissionRequest request
                           ) {
 
-                              runOnUiThread(() ->
+                              runOnUiThread(
+                                  new Runnable() {
 
-                                  request.grant(
-                                      request.getResources()
-                                  )
+                                      @Override
+                                      public void run() {
 
+                                          request.grant(
+                                              request
+                                                  .getResources()
+                                          );
+                                      }
+                                  }
                               );
                           }
                       }
                   );
 
                   webView.loadUrl(
-                      "https://appassets.androidplatform.net/assets/index.html"
+                      "file:///android_asset/index.html"
                   );
 
                   setContentView(webView);
@@ -341,30 +473,49 @@ jobs:
                   } else {
 
                       super.onBackPressed();
-
                   }
               }
           }
           EOF
+
+      # =========================
+      # INSTALL GRADLE
+      # =========================
 
       - name: Install Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
 
+      # =========================
+      # BUILD APK
+      # =========================
+
       - name: Build APK
         run: |
           gradle assembleDebug --no-daemon
 
+      # =========================
+      # BUILD AAB
+      # =========================
+
       - name: Build AAB
         run: |
           gradle bundleRelease --no-daemon
+
+      # =========================
+      # UPLOAD APK
+      # =========================
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Unique-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+
+      # =========================
+      # UPLOAD AAB
+      # =========================
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
