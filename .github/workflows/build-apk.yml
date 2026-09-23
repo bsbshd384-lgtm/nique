@@ -1,524 +1,3000 @@
-name: Build Unique APK and AAB
-
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Unique</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+
+<style>
+*{box-sizing:border-box}
+:root{
+ --bg:#090909;--card:#151515;--card2:#202020;
+ --text:#fff;--muted:#999;--line:#292929;
+ --red:#ff0033;--blue:#0095f6;--green:#25d366
+}
+html,body{
+ margin:0;background:#000;color:var(--text);
+ font-family:Arial,Helvetica,sans-serif
+}
+body{min-height:100vh}
+button,input,textarea{font:inherit}
+button{border:0;background:none;color:#fff;cursor:pointer}
+.app{
+ max-width:700px;margin:auto;min-height:100vh;
+ background:var(--bg);padding-bottom:78px
+}
+.top{
+ height:60px;display:flex;align-items:center;gap:8px;
+ padding:0 10px;position:sticky;top:0;z-index:30;
+ background:rgba(9,9,9,.97);backdrop-filter:blur(12px);
+ border-bottom:1px solid #181818
+}
+.logo{display:flex;align-items:center;gap:8px;margin-right:auto}
+.logoIcon{
+ width:39px;height:39px;border-radius:12px;
+ background:linear-gradient(135deg,#fff 0 43%,#ff0033 44% 100%);
+ position:relative;display:grid;place-items:center;
+ box-shadow:0 0 18px #ff003355
+}
+.logoIcon:after{
+ content:"▶";font-size:17px;color:#ff0033;
+ background:#080808;width:22px;height:22px;
+ border-radius:7px;display:grid;place-items:center;
+ padding-left:2px
+}
+.logoText{font-size:21px;font-weight:900;letter-spacing:-1px}
+.logoText b{color:var(--red)}
+.topBtn{
+ width:40px;height:40px;border-radius:50%;
+ display:grid;place-items:center
+}
+.topBtn:active{background:#222}
+.svg{
+ width:23px;height:23px;fill:none;
+ stroke:currentColor;stroke-width:2;
+ stroke-linecap:round;stroke-linejoin:round
+}
+.searchBox{
+ display:none;flex:1;height:40px;background:#202020;
+ border-radius:22px;padding:0 13px;align-items:center
+}
+.searchBox input{
+ width:100%;background:none;border:0;outline:0;color:#fff
+}
+.screen{display:none}
+.screen.active{display:block}
+
+.chips{
+ display:flex;gap:8px;overflow:auto;padding:10px 12px;
+ scrollbar-width:none
+}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+ background:#252525;padding:8px 15px;border-radius:20px;
+ white-space:nowrap;font-size:13px
+}
+.chip.active{background:#fff;color:#000}
+
+.videoCard{
+ padding-bottom:14px;margin-bottom:10px;
+ border-bottom:1px solid #222
+}
+.thumb{
+ width:100%;aspect-ratio:16/9;background:#222;
+ position:relative;overflow:hidden
+}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.fakeThumb{
+ width:100%;height:100%;
+ background:linear-gradient(135deg,#151b30,#6b3045,#111);
+ display:grid;place-items:center
+}
+.play{
+ width:62px;height:62px;border-radius:50%;
+ background:#000b;display:grid;place-items:center;
+ font-size:25px
+}
+.duration{
+ position:absolute;right:8px;bottom:8px;
+ background:#000d;padding:4px 6px;border-radius:4px;
+ font-size:11px
+}
+.videoInfo{
+ display:flex;gap:10px;padding:10px 12px 0
+}
+.avatar{
+ width:40px;height:40px;flex:none;border-radius:50%;
+ display:grid;place-items:center;font-weight:800;
+ background:linear-gradient(135deg,#ff0033,#703cff)
+}
+.meta{min-width:0;flex:1}
+.title{font-size:16px;font-weight:700;line-height:1.35}
+.sub{font-size:12px;color:#999;margin-top:5px}
+.more{font-size:23px}
+.actionRow{
+ display:flex;gap:7px;overflow:auto;padding:9px 12px 0
+}
+.action{
+ background:#242424;border-radius:20px;
+ padding:8px 13px;white-space:nowrap;font-size:12px
+}
+.action.on{color:#ff355b}
+
+.bottom{
+ position:fixed;bottom:0;left:50%;
+ transform:translateX(-50%);
+ width:min(700px,100%);height:76px;
+ background:#090909;border-top:1px solid #292929;
+ display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;
+ z-index:60
+}
+.nav{
+ display:flex;flex-direction:column;
+ align-items:center;justify-content:center;
+ gap:4px;color:#999;font-size:10px
+}
+.nav.active{color:#fff}
+.create{
+ width:54px;height:54px;border-radius:50%;
+ background:#222;margin-top:-7px;
+ display:grid;place-items:center
+}
+.create .svg{width:33px;height:33px}
+
+.pageTitle{
+ font-size:22px;font-weight:800;padding:17px 14px 8px
+}
+.row{
+ display:flex;align-items:center;gap:12px;
+ padding:13px 14px;border-bottom:1px solid #222
+}
+.rowText{flex:1;min-width:0}
+.rowTitle{font-weight:700}
+.rowSub{font-size:12px;color:#888;margin-top:4px}
+.empty{text-align:center;color:#888;padding:55px 20px}
+
+.inbox,.chat{
+ position:fixed;inset:0;background:#0b0b0b;
+ z-index:100;display:none
+}
+.inbox.open,.chat.open{display:flex;flex-direction:column}
+.inboxHead,.chatHead{
+ height:60px;display:flex;align-items:center;
+ gap:8px;padding:0 10px;border-bottom:1px solid #252525
+}
+.headTitle{font-size:20px;font-weight:800;flex:1}
+.backBtn{width:40px;height:40px;font-size:27px}
+.inboxSearch{
+ margin:10px 14px;height:40px;background:#202020;
+ border-radius:10px;padding:0 12px;display:flex;
+ align-items:center
+}
+.inboxSearch input{
+ width:100%;border:0;outline:0;background:none;color:#fff
+}
+.notes{
+ display:flex;gap:16px;overflow:auto;padding:8px 14px 15px
+}
+.note{min-width:60px;text-align:center;color:#999;font-size:11px}
+.note .avatar{margin:auto}
+.userList{overflow:auto}
+.online{
+ width:9px;height:9px;background:#25d366;
+ border-radius:50%
+}
+
+.chatBody{flex:1;overflow:auto;padding:14px}
+.bubble{
+ max-width:78%;padding:10px 13px;border-radius:17px;
+ margin:7px 0;font-size:14px
+}
+.mine{background:#ff0033;margin-left:auto}
+.theirs{background:#252525}
+.chatSend{
+ display:flex;gap:7px;padding:9px;
+ border-top:1px solid #292929
+}
+.chatSend input{
+ flex:1;background:#202020;border:0;
+ outline:0;color:#fff;border-radius:22px;padding:11px 14px
+}
+.sendBtn{background:#ff0033;border-radius:22px;padding:0 16px}
+
+.modal{
+ position:fixed;inset:0;background:#000d;
+ z-index:150;display:none;
+ align-items:center;justify-content:center;padding:15px
+}
+.modal.open{display:flex}
+.modalCard{
+ width:min(620px,100%);max-height:92vh;
+ overflow:auto;background:#151515;border-radius:16px
+}
+.modalHead{
+ display:flex;align-items:center;
+ padding:13px;border-bottom:1px solid #292929
+}
+.modalHead b{flex:1}
+.close{font-size:25px}
+
+.player{
+ width:100%;aspect-ratio:16/9;background:#000;
+ display:grid;place-items:center
+}
+.player video{width:100%;height:100%;object-fit:contain}
+.playerFake{
+ width:100%;height:100%;
+ background:linear-gradient(135deg,#1a2037,#63394b);
+ display:grid;place-items:center;font-size:45px
+}
+.playerInfo{padding:12px}
+.playerInfo h3{margin:0}
+.comments{max-height:250px;overflow:auto;padding:0 12px}
+.comment{padding:9px 0;border-bottom:1px solid #252525}
+.comment p{margin:5px 0;color:#ddd;font-size:13px}
+.commentInput{
+ display:flex;gap:7px;padding:10px
+}
+.commentInput input{
+ flex:1;background:#222;border:0;
+ outline:0;color:#fff;border-radius:22px;padding:10px
+}
+
+.form{padding:15px}
+.form input,.form textarea,.form select{
+ width:100%;background:#202020;color:#fff;
+ border:1px solid #333;border-radius:9px;
+ padding:12px;margin:6px 0;outline:0
+}
+.form textarea{min-height:100px;resize:none}
+.primary{
+ width:100%;background:#ff0033;
+ padding:12px;border-radius:9px;
+ font-weight:800;margin-top:8px
+}
+.secondary{
+ background:#292929;padding:11px 15px;border-radius:8px
+}
+.progress{
+ height:5px;background:#333;margin-top:10px;display:none
+}
+.progress i{display:block;height:100%;width:0;background:#ff0033}
+
+.createMenu{
+ position:fixed;inset:0;background:#000b;
+ z-index:140;display:none;align-items:flex-end
+}
+.createMenu.open{display:flex}
+.sheet{
+ width:100%;background:#171717;
+ border-radius:20px 20px 0 0;padding:20px
+}
+.sheet h3{margin:0 0 10px}
+.option{
+ display:flex;align-items:center;gap:14px;
+ padding:15px 4px;border-bottom:1px solid #292929
+}
+.optionIcon{
+ width:43px;height:43px;border-radius:50%;
+ background:#292929;display:grid;place-items:center
+}
+
+.shortFeed{background:#000}
+.short{
+ height:calc(100vh - 76px);
+ min-height:560px;position:relative;
+ overflow:hidden;background:#151515
+}
+.shortBg{width:100%;height:100%;object-fit:cover}
+.shortOverlay{
+ position:absolute;inset:0;
+ background:linear-gradient(transparent 45%,#000d)
+}
+.shortText{
+ position:absolute;left:14px;right:80px;bottom:30px
+}
+.shortText b{font-size:18px}
+.shortText p{font-size:13px}
+.shortActions{
+ position:absolute;right:10px;bottom:25px;
+ display:flex;flex-direction:column;gap:20px
+}
+.shortAct{text-align:center;font-size:11px}
+.shortAct .svg{display:block;margin:auto;width:29px;height:29px}
+
+.profileHead{padding:25px 17px;border-bottom:1px solid #222}
+.profileBig{
+ width:85px;height:85px;border-radius:50%;
+ background:linear-gradient(135deg,#ff0033,#703cff);
+ display:grid;place-items:center;font-size:30px;font-weight:800
+}
+.profileName{font-size:23px;font-weight:800;margin-top:12px}
+.profileId{font-size:11px;color:#777;margin-top:5px}
+.profileBtns{display:flex;gap:8px;margin-top:15px}
+.profileBtns button{
+ flex:1;background:#252525;padding:10px;border-radius:8px
+}
+
+.setting{
+ display:flex;align-items:center;padding:15px;
+ border-bottom:1px solid #222
+}
+.settingText{flex:1}
+.settingText b{display:block}
+.settingText span{color:#888;font-size:12px}
+.switch{
+ width:45px;height:25px;background:#444;
+ border-radius:20px;padding:3px
+}
+.switch i{
+ display:block;width:19px;height:19px;
+ background:#fff;border-radius:50%
+}
+.switch.on{background:#ff0033}
+.switch.on i{margin-left:20px}
+
+.loginGate{
+ position:fixed;inset:0;background:#000;
+ z-index:999;display:flex;
+ align-items:center;justify-content:center;padding:18px
+}
+.loginGate.hide{display:none}
+.loginCard{
+ width:min(380px,100%);
+ border:1px solid #292929;
+ background:#101010;border-radius:16px;
+ padding:25px;text-align:center
+}
+.loginLogo{
+ width:90px;height:90px;border-radius:24px;
+ margin:0 auto 15px;
+ background:linear-gradient(135deg,#fff 0 43%,#ff0033 44%);
+ display:grid;place-items:center;
+ box-shadow:0 0 30px #ff003344
+}
+.loginLogo:after{
+ content:"▶";font-size:31px;color:#ff0033;
+ background:#050505;width:42px;height:42px;
+ border-radius:13px;display:grid;place-items:center;
+ padding-left:4px
+}
+.loginBrand{font-size:31px;font-weight:900}
+.loginBrand b{color:#ff0033}
+.loginTitle{color:#999;font-size:13px;margin:7px 0 18px}
+.loginCard input{
+ width:100%;height:45px;
+ background:#1d1d1d;border:1px solid #333;
+ color:#fff;border-radius:8px;
+ padding:0 12px;margin:5px 0;outline:0
+}
+.loginBtn{
+ width:100%;height:45px;
+ background:#ff0033;border-radius:8px;
+ margin-top:9px;font-weight:800
+}
+.loginSwitch{margin-top:18px;color:#999;font-size:13px}
+.loginSwitch button{color:#0095f6;font-weight:800}
+.loginMsg{font-size:12px;color:#ff667d;min-height:20px;margin-top:8px}
+.forgot{font-size:12px;color:#aaa;margin-top:13px}
+
+.callScreen{
+ position:fixed;inset:0;background:#050505;
+ z-index:300;display:none
+}
+.callScreen.open{display:block}
+.remoteVideo{
+ width:100%;height:100%;object-fit:cover;
+ background:linear-gradient(135deg,#171717,#252525)
+}
+.localVideo{
+ position:absolute;right:15px;top:65px;
+ width:115px;height:165px;
+ background:#222;border-radius:12px;
+ object-fit:cover
+}
+.callName{
+ position:absolute;top:25px;left:0;right:0;
+ text-align:center;font-weight:800;font-size:18px
+}
+.callControls{
+ position:absolute;bottom:35px;left:0;right:0;
+ display:flex;justify-content:center;gap:16px
+}
+.callBtn{
+ width:58px;height:58px;border-radius:50%;
+ background:#292929;display:grid;place-items:center;
+ font-size:22px
+}
+.callBtn.red{background:#ff0033}
+.incoming{
+ position:fixed;inset:0;background:#000d;
+ z-index:310;display:none;
+ align-items:center;justify-content:center
+}
+.incoming.open{display:flex}
+.incomingCard{
+ width:min(340px,90%);background:#171717;
+ border-radius:20px;padding:28px;text-align:center
+}
+.incomingAvatar{
+ width:80px;height:80px;border-radius:50%;
+ background:linear-gradient(135deg,#ff0033,#703cff);
+ display:grid;place-items:center;
+ font-size:28px;font-weight:800;margin:auto
+}
+.incomingBtns{display:flex;gap:20px;justify-content:center;margin-top:25px}
+.incomingBtns button{
+ width:58px;height:58px;border-radius:50%;
+ background:#25d366;font-size:22px
+}
+.incomingBtns .reject{background:#ff0033}
+
+.toast{
+ position:fixed;left:50%;bottom:90px;
+ transform:translateX(-50%);
+ background:#fff;color:#111;
+ padding:10px 15px;border-radius:9px;
+ z-index:500;display:none;font-size:13px
+}
+.toast.show{display:block}
+
+@media(max-width:400px){
+ .logoText{font-size:18px}
+ .topBtn{width:36px}
+ .title{font-size:15px}
+}
+</style>
+</head>
+
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div class="loginGate" id="loginGate">
+ <div class="loginCard">
+
+  <div class="loginLogo"></div>
+
+  <div class="loginBrand">Uni<b>que</b></div>
+
+  <div class="loginTitle" id="loginTitle">
+   ভিডিও, Shorts আর বন্ধুদের সাথে Unique-এ যুক্ত থাকুন
+  </div>
+
+  <input id="authName" placeholder="আপনার নাম" style="display:none">
+  <input id="authEmail" type="email" placeholder="Email">
+  <input id="authPassword" type="password" placeholder="Password">
+
+  <button class="loginBtn" id="authBtn" onclick="submitAuth()">
+   Log in
+  </button>
+
+  <div class="forgot" onclick="forgotPassword()">
+   Password ভুলে গেছেন?
+  </div>
+
+  <div class="loginMsg" id="authMsg"></div>
+
+  <div class="loginSwitch">
+   <span id="switchText">Don't have an account?</span>
+   <button onclick="toggleAuth()" id="switchBtn">Sign up</button>
+  </div>
+
+ </div>
+</div>
+
+<div class="app">
+
+<!-- ================= TOP ================= -->
+<header class="top">
+
+ <div class="logo">
+  <div class="logoIcon"></div>
+  <div class="logoText">Uni<b>que</b></div>
+ </div>
+
+ <div class="searchBox" id="searchBox">
+  <input id="searchInput" placeholder="Search videos, channels...">
+ </div>
+
+ <button class="topBtn" onclick="toggleSearch()">
+  <svg class="svg" viewBox="0 0 24 24">
+   <circle cx="11" cy="11" r="7"/>
+   <path d="m20 20-4-4"/>
+  </svg>
+ </button>
+
+ <button class="topBtn" onclick="openInbox()">
+  <svg class="svg" viewBox="0 0 24 24">
+   <path d="M4 5h16v14H4z"/>
+   <path d="m4 6 8 6 8-6"/>
+  </svg>
+ </button>
+
+ <button class="topBtn" onclick="openNotifications()">
+  <svg class="svg" viewBox="0 0 24 24">
+   <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/>
+   <path d="M10 21h4"/>
+  </svg>
+ </button>
+
+</header>
+
+<!-- ================= HOME ================= -->
+<section class="screen active" id="home">
+
+ <div class="chips">
+  <button class="chip active" onclick="filterVideos('All',this)">All</button>
+  <button class="chip" onclick="filterVideos('Music',this)">Music</button>
+  <button class="chip" onclick="filterVideos('Gaming',this)">Gaming</button>
+  <button class="chip" onclick="filterVideos('News',this)">News</button>
+  <button class="chip" onclick="filterVideos('Education',this)">Education</button>
+  <button class="chip" onclick="filterVideos('Sports',this)">Sports</button>
+  <button class="chip" onclick="filterVideos('Travel',this)">Travel</button>
+ </div>
+
+ <div id="videoFeed"></div>
+
+</section>
+
+<!-- ================= SHORTS ================= -->
+<section class="screen shortFeed" id="shorts">
+ <div class="short" id="shortBox">
+  <div class="fakeThumb" style="height:100%">
+   <div class="play">▶</div>
+  </div>
+
+  <div class="shortOverlay"></div>
+
+  <div class="shortText">
+   <b id="shortTitle">Unique Shorts 🔥</b>
+   <p id="shortDesc">Welcome to Unique — Watch, Share & Connect</p>
+   <span>#Unique #Shorts #Bangladesh</span>
+  </div>
+
+  <div class="shortActions">
+   <button class="shortAct" onclick="shortLike(this)">
+    <svg class="svg"><use href="#heart"/></svg>
+    <span>Like</span>
+   </button>
+   <button class="shortAct" onclick="showToast('Comments')">
+    <svg class="svg"><use href="#comment"/></svg>
+    <span>Comments</span>
+   </button>
+   <button class="shortAct" onclick="shareText('Unique Shorts')">
+    <svg class="svg"><use href="#share"/></svg>
+    <span>Share</span>
+   </button>
+   <button class="shortAct" onclick="showToast('Saved')">
+    <svg class="svg"><use href="#save"/></svg>
+    <span>Save</span>
+   </button>
+  </div>
+ </div>
+</section>
+
+<!-- ================= SUBSCRIPTIONS ================= -->
+<section class="screen" id="subscriptions">
+ <div class="pageTitle">Subscriptions</div>
+ <div id="subscriptionList"></div>
+</section>
+
+<!-- ================= YOU ================= -->
+<section class="screen" id="you">
+
+ <div class="profileHead">
+  <div class="profileBig" id="profileAvatar">U</div>
+  <div class="profileName" id="profileName">Unique User</div>
+  <div class="profileId" id="profileId">ID: loading...</div>
+
+  <div class="profileBtns">
+   <button onclick="openMyVideos()">Your videos</button>
+   <button onclick="openSettings()">Settings</button>
+  </div>
+ </div>
+
+ <div class="row" onclick="openHistory()">
+  <div>🕘</div>
+  <div class="rowText">
+   <div class="rowTitle">History</div>
+   <div class="rowSub">আপনি যে ভিডিওগুলো দেখেছেন</div>
+  </div>
+  <div>›</div>
+ </div>
+
+ <div class="row" onclick="openPlaylists()">
+  <div>📚</div>
+  <div class="rowText">
+   <div class="rowTitle">Playlists</div>
+   <div class="rowSub">Saved videos & playlists</div>
+  </div>
+  <div>›</div>
+ </div>
+
+ <div class="row" onclick="openNotifications()">
+  <div>🔔</div>
+  <div class="rowText">
+   <div class="rowTitle">Notifications</div>
+   <div class="rowSub">Likes, comments & subscriptions</div>
+  </div>
+  <div>›</div>
+ </div>
+
+ <div class="row" onclick="openAI()">
+  <div>🤖</div>
+  <div class="rowText">
+   <div class="rowTitle">Unique AI</div>
+   <div class="rowSub">Video ideas, titles, hashtags</div>
+  </div>
+  <div>›</div>
+ </div>
+
+ <div class="row" onclick="logout()">
+  <div>🚪</div>
+  <div class="rowText">
+   <div class="rowTitle">Log out</div>
+  </div>
+ </div>
+
+</section>
+
+<!-- ================= BOTTOM ================= -->
+<nav class="bottom">
+
+ <button class="nav active" onclick="go('home',this)">
+  <svg class="svg"><use href="#homeIcon"/></svg>
+  <span>Home</span>
+ </button>
+
+ <button class="nav" onclick="go('shorts',this)">
+  <svg class="svg"><use href="#shortIcon"/></svg>
+  <span>Shorts</span>
+ </button>
+
+ <button class="nav" onclick="openCreate()">
+  <div class="create">
+   <svg class="svg"><use href="#plus"/></svg>
+  </div>
+ </button>
+
+ <button class="nav" onclick="go('subscriptions',this);loadSubscriptions()">
+  <svg class="svg"><use href="#subIcon"/></svg>
+  <span>Subscriptions</span>
+ </button>
+
+ <button class="nav" onclick="go('you',this)">
+  <svg class="svg"><use href="#userIcon"/></svg>
+  <span>You</span>
+ </button>
+
+</nav>
+
+</div>
+
+<!-- ================= INBOX ================= -->
+<div class="inbox" id="inbox">
+
+ <div class="inboxHead">
+  <button class="backBtn" onclick="closeInbox()">‹</button>
+  <div class="headTitle">Messages</div>
+
+  <button onclick="showToast('New message')">＋</button>
+ </div>
+
+ <div class="inboxSearch">
+  🔎
+  <input id="userSearch" placeholder="Search people..."
+   oninput="renderUsers()">
+ </div>
+
+ <div class="notes">
+  <div class="note">
+   <div class="avatar">+</div>
+   Add note
+  </div>
+  <div class="note">
+   <div class="avatar">U</div>
+   Your note
+  </div>
+ </div>
+
+ <div class="pageTitle" style="font-size:16px">
+  Messages
+ </div>
+
+ <div class="userList" id="userList"></div>
+
+</div>
+
+<!-- ================= CHAT ================= -->
+<div class="chat" id="chat">
+
+ <div class="chatHead">
+  <button class="backBtn" onclick="closeChat()">‹</button>
+  <div class="avatar" id="chatAvatar">U</div>
+  <div class="headTitle" id="chatName">User</div>
+
+  <button class="topBtn" onclick="startCall('audio')">☎</button>
+  <button class="topBtn" onclick="startCall('video')">▣</button>
+ </div>
+
+ <div class="chatBody" id="chatBody"></div>
+
+ <div class="chatSend">
+  <input id="messageInput" placeholder="Message..."
+   onkeydown="if(event.key==='Enter')sendMessage()">
+  <button class="sendBtn" onclick="sendMessage()">Send</button>
+ </div>
+
+</div>
+
+<!-- ================= VIDEO MODAL ================= -->
+<div class="modal" id="videoModal">
+ <div class="modalCard">
+
+  <div class="modalHead">
+   <b id="playerTitle">Video</b>
+   <button class="close" onclick="closeVideo()">×</button>
+  </div>
+
+  <div class="player">
+   <video id="player" controls playsinline></video>
+   <div id="playerFake" class="playerFake">▶</div>
+  </div>
+
+  <div class="playerInfo">
+   <div id="playerMeta" class="sub"></div>
+
+   <div class="actionRow">
+    <button class="action" id="likeBtn" onclick="likeVideo()">♡ Like</button>
+    <button class="action" onclick="shareCurrent()">↗ Share</button>
+    <button class="action" onclick="saveCurrent()">💾 Save</button>
+    <button class="action" onclick="showToast('Video reported')">🚩 Report</button>
+   </div>
+  </div>
+
+  <div class="comments" id="comments"></div>
+
+  <div class="commentInput">
+   <input id="commentInput" placeholder="Write a comment...">
+   <button class="sendBtn" onclick="addComment()">Post</button>
+  </div>
+
+ </div>
+</div>
+
+<!-- ================= UPLOAD ================= -->
+<div class="modal" id="uploadModal">
+ <div class="modalCard">
+
+  <div class="modalHead">
+   <b>Upload video</b>
+   <button class="close" onclick="closeUpload()">×</button>
+  </div>
+
+  <div class="form">
+
+   <input id="uploadTitle" placeholder="Video title">
+
+   <textarea id="uploadDesc"
+    placeholder="Description"></textarea>
+
+   <input id="uploadTags"
+    placeholder="#hashtags">
+
+   <input id="videoFile" type="file"
+    accept="video/*">
+
+   <div class="progress" id="uploadProgress">
+    <i></i>
+   </div>
+
+   <button class="primary" onclick="uploadVideo()">
+    Upload video
+   </button>
+
+  </div>
+ </div>
+</div>
+
+<!-- ================= CREATE SHEET ================= -->
+<div class="createMenu" id="createMenu">
+ <div class="sheet">
+
+  <h3>Create</h3>
+
+  <div class="option" onclick="closeCreate();openUpload()">
+   <div class="optionIcon">🎬</div>
+   <div>
+    <b>Upload video</b>
+    <div class="rowSub">Publish a new video</div>
+   </div>
+  </div>
+
+  <div class="option" onclick="closeCreate();showToast('Shorts upload ready')">
+   <div class="optionIcon">🔥</div>
+   <div>
+    <b>Create Short</b>
+    <div class="rowSub">Make a vertical short video</div>
+   </div>
+  </div>
+
+  <div class="option" onclick="closeCreate();openAI()">
+   <div class="optionIcon">🤖</div>
+   <div>
+    <b>AI video idea</b>
+    <div class="rowSub">Generate title & hashtags</div>
+   </div>
+  </div>
+
+ </div>
+</div>
+
+<!-- ================= CALL ================= -->
+<div class="callScreen" id="callScreen">
+
+ <video class="remoteVideo" id="remoteVideo"
+  autoplay playsinline></video>
+
+ <video class="localVideo" id="localVideo"
+  autoplay muted playsinline></video>
+
+ <div class="callName" id="callName">Calling...</div>
+
+ <div class="callControls">
+
+  <button class="callBtn" onclick="toggleMute()">
+   🎤
+  </button>
+
+  <button class="callBtn" onclick="toggleCamera()">
+   📷
+  </button>
+
+  <button class="callBtn red" onclick="hangupCall()">
+   ☎
+  </button>
+
+ </div>
+
+</div>
+
+<!-- ================= INCOMING CALL ================= -->
+<div class="incoming" id="incoming">
+
+ <div class="incomingCard">
+
+  <div class="incomingAvatar" id="incomingAvatar">U</div>
+
+  <h2 id="incomingName">Incoming call</h2>
+
+  <p id="incomingType" style="color:#999">
+   Video call
+  </p>
+
+  <div class="incomingBtns">
+
+   <button onclick="acceptIncoming()">☎</button>
+
+   <button class="reject" onclick="rejectIncoming()">×</button>
+
+  </div>
+
+ </div>
+</div>
+
+<!-- ================= SVG ICONS ================= -->
+<svg style="display:none">
+<symbol id="homeIcon" viewBox="0 0 24 24">
+ <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+</symbol>
+
+<symbol id="shortIcon" viewBox="0 0 24 24">
+ <path d="M8 3h8a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V8a5 5 0 0 1 5-5z"/>
+ <path d="m10 8 6 4-6 4z"/>
+</symbol>
+
+<symbol id="plus" viewBox="0 0 24 24">
+ <path d="M12 5v14M5 12h14"/>
+</symbol>
+
+<symbol id="subIcon" viewBox="0 0 24 24">
+ <path d="M4 7h16v12H4z"/>
+ <path d="M8 7V5h8v2"/>
+ <path d="M9 12h6"/>
+</symbol>
+
+<symbol id="userIcon" viewBox="0 0 24 24">
+ <circle cx="12" cy="8" r="4"/>
+ <path d="M4 21a8 8 0 0 1 16 0"/>
+</symbol>
+
+<symbol id="heart" viewBox="0 0 24 24">
+ <path d="M20 8c0 5-8 11-8 11S4 13 4 8a4 4 0 0 1 7-2 4 4 0 0 1 9 2z"/>
+</symbol>
+
+<symbol id="comment" viewBox="0 0 24 24">
+ <path d="M4 5h16v11H8l-4 4z"/>
+</symbol>
+
+<symbol id="share" viewBox="0 0 24 24">
+ <path d="m4 12 16-8-6 16-3-6z"/>
+ <path d="m11 14 9-10"/>
+</symbol>
+
+<symbol id="save" viewBox="0 0 24 24">
+ <path d="M6 4h12v17l-6-4-6 4z"/>
+</symbol>
+</svg>
+
+<div class="toast" id="toast"></div>
+
+<script>
+
+/* =====================================================
+   FIREBASE
+===================================================== */
+
+const firebaseConfig={
+ apiKey:"AIzaSyDFLpq9_93GL2Mwyu_bn6fcR5uoAGV7tVc",
+ authDomain:"unique-68bf8.firebaseapp.com",
+ databaseURL:"https://unique-68bf8-default-rtdb.firebaseio.com",
+ projectId:"unique-68bf8",
+ storageBucket:"unique-68bf8.firebasestorage.app",
+ messagingSenderId:"1060778605866",
+ appId:"1:1060778605866:web:1e20ecc3e18dd43bd87253",
+ measurementId:"G-293QRPTC72"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth=firebase.auth();
+const db=firebase.database();
+const storage=firebase.storage();
+
+let uid=null;
+let users={};
+let currentFriendId=null;
+let currentVideo=null;
+let currentCallId=null;
+let localStream=null;
+let pc=null;
+let incomingCallData=null;
+let currentVideoLike=false;
+let messageListener=null;
+
+const rtcConfig={
+ iceServers:[
+  {urls:"stun:stun.l.google.com:19302"},
+  {urls:"stun:stun1.l.google.com:19302"}
+ ]
+};
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
+
+let authMode="login";
+
+auth.onAuthStateChanged(async user=>{
+
+ if(!user){
+  document.getElementById("loginGate").classList.remove("hide");
+  return;
+ }
+
+ uid=user.uid;
+
+ const ref=db.ref("users/"+uid);
+ const snap=await ref.once("value");
+ const old=snap.val()||{};
+
+ const name=
+  old.name ||
+  user.displayName ||
+  "Unique User";
+
+ await ref.update({
+  uid:uid,
+  name:name,
+  email:user.email||"",
+  online:true,
+  lastSeen:firebase.database.ServerValue.TIMESTAMP
+ });
+
+ ref.child("online")
+  .onDisconnect()
+  .set(false);
+
+ ref.child("lastSeen")
+  .onDisconnect()
+  .set(firebase.database.ServerValue.TIMESTAMP);
+
+ document.getElementById("profileName").textContent=name;
+ document.getElementById("profileAvatar").textContent=
+  name.charAt(0).toUpperCase();
+
+ document.getElementById("profileId").textContent=
+  "ID: "+uid;
+
+ document.getElementById("loginGate").classList.add("hide");
+
+ listenUsers();
+ loadAllVideos();
+ loadHistory();
+ listenIncomingCalls();
+});
+
+
+function toggleAuth(){
+
+ authMode=authMode==="login"?"signup":"login";
+
+ const name=document.getElementById("authName");
+ const btn=document.getElementById("authBtn");
+ const title=document.getElementById("loginTitle");
+ const sw=document.getElementById("switchText");
+ const sb=document.getElementById("switchBtn");
+
+ if(authMode==="signup"){
+
+  name.style.display="block";
+  btn.textContent="Sign up";
+  title.textContent="আজই Unique account তৈরি করুন";
+  sw.textContent="Already have an account?";
+  sb.textContent="Log in";
+
+ }else{
+
+  name.style.display="none";
+  btn.textContent="Log in";
+  title.textContent="ভিডিও, Shorts আর বন্ধুদের সাথে Unique-এ যুক্ত থাকুন";
+  sw.textContent="Don't have an account?";
+  sb.textContent="Sign up";
+ }
+
+ document.getElementById("authMsg").textContent="";
+}
+
+
+async function submitAuth(){
+
+ const email=document.getElementById("authEmail").value.trim();
+ const pass=document.getElementById("authPassword").value;
+ const name=document.getElementById("authName").value.trim();
+ const msg=document.getElementById("authMsg");
+
+ if(!email || pass.length<6 ||
+   (authMode==="signup"&&!name)){
+
+  msg.textContent=
+   "সঠিক তথ্য দিন — password কমপক্ষে 6 অক্ষর";
+  return;
+ }
+
+ try{
+
+  if(authMode==="signup"){
+
+   const cred=
+    await auth.createUserWithEmailAndPassword(
+     email,pass
+    );
+
+   await cred.user.updateProfile({
+    displayName:name
+   });
+
+   await db.ref("users/"+cred.user.uid).set({
+    uid:cred.user.uid,
+    name:name,
+    email:email,
+    online:true,
+    lastSeen:
+     firebase.database.ServerValue.TIMESTAMP
+   });
+
+  }else{
+
+   await auth.signInWithEmailAndPassword(
+    email,pass
+   );
+
+  }
+
+ }catch(e){
+
+  const errors={
+   "auth/invalid-credential":"Email বা password ভুল",
+   "auth/user-not-found":"Account পাওয়া যায়নি",
+   "auth/wrong-password":"Password ভুল",
+   "auth/email-already-in-use":"এই email দিয়ে account আছে",
+   "auth/weak-password":"Password কমপক্ষে 6 অক্ষর দিন",
+   "auth/invalid-email":"Email ঠিকভাবে লিখুন"
+  };
+
+  msg.textContent=
+   errors[e.code] ||
+   "Login হয়নি: "+e.message;
+ }
+}
+
+
+async function forgotPassword(){
+
+ const email=
+  document.getElementById("authEmail").value.trim();
+
+ if(!email){
+  document.getElementById("authMsg").textContent=
+   "আগে email লিখুন";
+  return;
+ }
+
+ try{
+
+  await auth.sendPasswordResetEmail(email);
+
+  document.getElementById("authMsg").textContent=
+   "Password reset email পাঠানো হয়েছে";
+
+ }catch(e){
+
+  document.getElementById("authMsg").textContent=
+   e.message;
+ }
+}
+
+
+function logout(){
+ auth.signOut();
+}
+
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+function go(id,btn){
+
+ document.querySelectorAll(".screen")
+  .forEach(x=>x.classList.remove("active"));
+
+ document.getElementById(id)
+  .classList.add("active");
+
+ document.querySelectorAll(".nav")
+  .forEach(x=>x.classList.remove("active"));
+
+ if(btn)btn.classList.add("active");
+
+ if(id==="home")renderFeed();
+ if(id==="subscriptions")loadSubscriptions();
+}
+
+
+/* =====================================================
+   DEMO VIDEOS
+===================================================== */
+
+let videos=[
+
+ {
+  id:"demo1",
+  title:"Free Fire Gameplay IQ Level 999 🔥",
+  channel:"Gaming Zone",
+  category:"Gaming",
+  views:"2.3M views",
+  time:"3 days ago",
+  duration:"18:32",
+  thumb:"https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80"
+ },
+
+ {
+  id:"demo2",
+  title:"Life Is Better When You Travel 🌍",
+  channel:"Unique Travel",
+  category:"Travel",
+  views:"1.2M views",
+  time:"2 days ago",
+  duration:"12:45",
+  thumb:"https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=80"
+ },
+
+ {
+  id:"demo3",
+  title:"Best Music Mix 2026 🎵",
+  channel:"Music Vibes",
+  category:"Music",
+  views:"856K views",
+  time:"5 hours ago",
+  duration:"45:20",
+  thumb:"https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=1200&q=80"
+ },
+
+ {
+  id:"demo4",
+  title:"Mobile Coding — HTML শিখুন সহজে",
+  channel:"Code Bangla",
+  category:"Education",
+  views:"430K views",
+  time:"1 day ago",
+  duration:"15:08",
+  thumb:"https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80"
+ },
+
+ {
+  id:"demo5",
+  title:"Football Best Goals ⚽",
+  channel:"Sports Live",
+  category:"Sports",
+  views:"1.1M views",
+  time:"6 hours ago",
+  duration:"8:44",
+  thumb:"https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=1200&q=80"
+ }
+
+];
+
+
+/* =====================================================
+   FEED
+===================================================== */
+
+function renderFeed(category="All"){
+
+ let list=
+  category==="All"
+  ?videos
+  :videos.filter(v=>v.category===category);
+
+ const feed=document.getElementById("videoFeed");
+
+ feed.innerHTML="";
+
+ if(!list.length){
+  feed.innerHTML=
+   '<div class="empty">কোনো ভিডিও পাওয়া যায়নি</div>';
+  return;
+ }
+
+ list.forEach(v=>{
+
+  const card=document.createElement("article");
+
+  card.className="videoCard";
+
+  card.innerHTML=`
+
+   <div class="thumb" onclick="openVideo('${v.id}')">
+
+    ${
+     v.thumb
+     ? `<img src="${v.thumb}">`
+     : `<div class="fakeThumb"><div class="play">▶</div></div>`
+    }
+
+    <span class="duration">
+     ${v.duration||"Video"}
+    </span>
+
+   </div>
+
+   <div class="videoInfo">
+
+    <div class="avatar">
+     ${escapeHtml((v.channel||"U").charAt(0))}
+    </div>
+
+    <div class="meta">
+
+     <div class="title">
+      ${escapeHtml(v.title)}
+     </div>
+
+     <div class="sub">
+      ${escapeHtml(v.channel)}
+      · ${v.views||0}
+      · ${v.time||"now"}
+     </div>
+
+    </div>
+
+    <button class="more"
+     onclick="videoMore('${v.id}')">
+     ⋮
+    </button>
+
+   </div>
+
+   <div class="actionRow">
+
+    <button class="action"
+     onclick="likeFeed(this,'${v.id}')">
+     ♡ Like
+    </button>
+
+    <button class="action"
+     onclick="openVideo('${v.id}')">
+     💬 Comments
+    </button>
+
+    <button class="action"
+     onclick="shareText('${escapeAttr(v.title)}')">
+     ↗ Share
+    </button>
+
+    <button class="action"
+     onclick="subscribeChannel('${escapeAttr(v.channel)}')">
+     Subscribe
+    </button>
+
+   </div>
+  `;
+
+  feed.appendChild(card);
+ });
+}
+
+
+renderFeed();
+
+
+function filterVideos(category,el){
+
+ document.querySelectorAll(".chip")
+  .forEach(x=>x.classList.remove("active"));
+
+ el.classList.add("active");
+
+ renderFeed(category);
+}
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+function toggleSearch(){
+
+ const box=document.getElementById("searchBox");
+
+ box.style.display=
+  box.style.display==="flex"
+  ?"none":"flex";
+
+ if(box.style.display==="flex")
+  document.getElementById("searchInput").focus();
+}
+
+
+document.getElementById("searchInput")
+ .addEventListener("input",function(){
+
+ const q=this.value.toLowerCase().trim();
+
+ const list=videos.filter(v=>
+  (
+   v.title+" "+
+   v.channel+" "+
+   v.category
+  ).toLowerCase().includes(q)
+ );
+
+ const feed=document.getElementById("videoFeed");
+ feed.innerHTML="";
+
+ list.forEach(v=>{
+
+  const card=document.createElement("article");
+  card.className="videoCard";
+
+  card.innerHTML=`
+   <div class="thumb"
+    onclick="openVideo('${v.id}')">
+    ${
+     v.thumb
+     ? `<img src="${v.thumb}">`
+     : `<div class="fakeThumb">
+          <div class="play">▶</div>
+        </div>`
+    }
+   </div>
+
+   <div class="videoInfo">
+    <div class="avatar">
+     ${v.channel.charAt(0)}
+    </div>
+
+    <div class="meta">
+     <div class="title">
+      ${escapeHtml(v.title)}
+     </div>
+     <div class="sub">
+      ${escapeHtml(v.channel)}
+      · ${v.views}
+     </div>
+    </div>
+   </div>
+  `;
+
+  feed.appendChild(card);
+ });
+
+});
+
+
+/* =====================================================
+   VIDEO
+===================================================== */
+
+function openVideo(id){
+
+ currentVideo=
+  videos.find(v=>v.id===id);
+
+ if(!currentVideo)return;
+
+ document.getElementById("videoModal")
+  .classList.add("open");
+
+ document.getElementById("playerTitle")
+  .textContent=currentVideo.title;
+
+ document.getElementById("playerMeta")
+  .textContent=
+   currentVideo.channel+
+   " · "+
+   currentVideo.views;
+
+ const player=
+  document.getElementById("player");
+
+ const fake=
+  document.getElementById("playerFake");
+
+ if(currentVideo.url){
+
+  player.src=currentVideo.url;
+  player.style.display="block";
+  fake.style.display="none";
+
+  player.play().catch(()=>{});
+
+ }else{
+
+  player.pause();
+  player.removeAttribute("src");
+  player.style.display="none";
+  fake.style.display="grid";
+ }
+
+ addHistory(currentVideo);
+
+ loadComments(currentVideo.id);
+}
+
+
+function closeVideo(){
+
+ const p=document.getElementById("player");
+
+ p.pause();
+ p.removeAttribute("src");
+
+ document.getElementById("videoModal")
+  .classList.remove("open");
+}
+
+
+function likeVideo(){
+
+ currentVideoLike=!currentVideoLike;
+
+ const btn=document.getElementById("likeBtn");
+
+ btn.textContent=
+  currentVideoLike
+  ?"♥ Liked"
+  :"♡ Like";
+}
+
+
+function likeFeed(btn,id){
+
+ btn.classList.toggle("on");
+
+ btn.textContent=
+  btn.classList.contains("on")
+  ?"♥ Liked":"♡ Like";
+}
+
+
+function saveCurrent(){
+
+ if(!uid||!currentVideo)return;
+
+ db.ref(
+  "saved/"+uid+"/"+currentVideo.id
+ ).set({
+  title:currentVideo.title,
+  at:firebase.database.ServerValue.TIMESTAMP
+ });
+
+ showToast("Saved to library");
+}
+
+
+function shareCurrent(){
+
+ shareText(currentVideo?.title||"Unique video");
+}
+
+
+async function shareText(text){
+
+ try{
+
+  if(navigator.share){
+
+   await navigator.share({
+    title:"Unique",
+    text:text
+   });
+
+  }else{
+
+   await navigator.clipboard.writeText(text);
+   showToast("Copied");
+
+  }
+
+ }catch(e){}
+}
+
+
+/* =====================================================
+   COMMENTS
+===================================================== */
+
+function loadComments(id){
+
+ const box=document.getElementById("comments");
+
+ box.innerHTML="";
+
+ db.ref("comments/"+id)
+  .limitToLast(50)
+  .on("value",snap=>{
+
+   box.innerHTML="";
+
+   snap.forEach(c=>{
+
+    const x=c.val();
+
+    box.innerHTML+=`
+     <div class="comment">
+      <b>${escapeHtml(x.name||"User")}</b>
+      <p>${escapeHtml(x.text||"")}</p>
+     </div>
+    `;
+
+   });
+
+  });
+}
+
+
+function addComment(){
+
+ if(!uid||!currentVideo)return;
+
+ const input=
+  document.getElementById("commentInput");
+
+ const text=input.value.trim();
+
+ if(!text)return;
+
+ db.ref("comments/"+currentVideo.id)
+  .push({
+   uid:uid,
+   name:
+    document.getElementById("profileName").textContent,
+   text:text,
+   at:firebase.database.ServerValue.TIMESTAMP
+  });
+
+ input.value="";
+}
+
+
+/* =====================================================
+   SUBSCRIBE
+===================================================== */
+
+function subscribeChannel(name){
+
+ if(!uid)return;
+
+ const key=safeKey(name);
+
+ db.ref(
+  "subscriptions/"+uid+"/"+key
+ ).set({
+  channel:name,
+  at:firebase.database.ServerValue.TIMESTAMP
+ });
+
+ showToast(name+" subscribed");
+}
+
+
+function loadSubscriptions(){
+
+ if(!uid)return;
+
+ const box=
+  document.getElementById("subscriptionList");
+
+ db.ref("subscriptions/"+uid)
+  .once("value")
+  .then(snap=>{
+
+   box.innerHTML="";
+
+   if(!snap.exists()){
+
+    box.innerHTML=
+     '<div class="empty">তুমি এখনো কোনো channel Subscribe করোনি।</div>';
+
+    return;
+   }
+
+   snap.forEach(c=>{
+
+    const x=c.val();
+
+    box.innerHTML+=`
+     <div class="row">
+      <div class="avatar">
+       ${(x.channel||"U").charAt(0)}
+      </div>
+      <div class="rowText">
+       <div class="rowTitle">
+        ${escapeHtml(x.channel)}
+       </div>
+       <div class="rowSub">
+        Subscribed
+       </div>
+      </div>
+      <button class="secondary">
+       Subscribed
+      </button>
+     </div>
+    `;
+
+   });
+
+  });
+}
+
+
+/* =====================================================
+   UPLOAD
+===================================================== */
+
+function openCreate(){
+ document.getElementById("createMenu")
+  .classList.add("open");
+}
+
+function closeCreate(){
+ document.getElementById("createMenu")
+  .classList.remove("open");
+}
+
+function openUpload(){
+ document.getElementById("uploadModal")
+  .classList.add("open");
+}
+
+function closeUpload(){
+ document.getElementById("uploadModal")
+  .classList.remove("open");
+}
+
+
+async function uploadVideo(){
+
+ if(!uid){
+  showToast("Login করুন");
+  return;
+ }
+
+ const file=
+  document.getElementById("videoFile").files[0];
+
+ const title=
+  document.getElementById("uploadTitle")
+  .value.trim();
+
+ const desc=
+  document.getElementById("uploadDesc")
+  .value.trim();
+
+ const tags=
+  document.getElementById("uploadTags")
+  .value.trim();
+
+ if(!file||!title){
+
+  showToast("Video এবং title দিন");
+  return;
+ }
+
+ const progress=
+  document.getElementById("uploadProgress");
+
+ const bar=progress.querySelector("i");
+
+ progress.style.display="block";
+
+ try{
+
+  const path=
+   "videos/"+uid+"/"+Date.now()+"_"+file.name
+    .replace(/[^\w.\-]/g,"_");
+
+  const task=
+   storage.ref(path).put(file);
+
+  task.on(
+   "state_changed",
+
+   s=>{
+    bar.style.width=
+     ((s.bytesTransferred/s.totalBytes)*100)+"%";
+   },
+
+   e=>{
+    console.error(e);
+    showToast("Upload failed");
+   },
+
+   async()=>{
+
+    const url=
+     await task.snapshot.ref.getDownloadURL();
+
+    await db.ref("videos").push({
+
+     uid:uid,
+     title:title,
+     description:desc,
+     tags:tags,
+     url:url,
+     channel:
+      document.getElementById("profileName").textContent,
+     views:0,
+     likes:0,
+     createdAt:
+      firebase.database.ServerValue.TIMESTAMP
+
+    });
+
+    showToast("Video uploaded ✅");
+
+    document.getElementById("uploadTitle").value="";
+    document.getElementById("uploadDesc").value="";
+    document.getElementById("uploadTags").value="";
+    document.getElementById("videoFile").value="";
+
+    progress.style.display="none";
+    bar.style.width="0";
+
+    closeUpload();
+
+    loadAllVideos();
+
+   }
+  );
+
+ }catch(e){
+
+  console.error(e);
+  showToast("Upload failed");
+
+ }
+
+}
+
+
+async function loadAllVideos(){
+
+ const snap=
+  await db.ref("videos")
+   .limitToLast(50)
+   .once("value");
+
+ snap.forEach(c=>{
+
+  const v=c.val();
+
+  if(v.url){
+
+   videos.unshift({
+    id:c.key,
+    title:v.title,
+    channel:v.channel||"Unique Creator",
+    category:"All",
+    views:(v.views||0)+" views",
+    time:"recent",
+    duration:"",
+    url:v.url,
+    thumb:v.thumbnail||""
+   });
+
+  }
+
+ });
+
+ renderFeed();
+
+}
+
+
+/* =====================================================
+   USERS / INBOX
+===================================================== */
+
+function openInbox(){
+
+ document.getElementById("inbox")
+  .classList.add("open");
+
+ renderUsers();
+}
+
+
+function closeInbox(){
+
+ document.getElementById("inbox")
+  .classList.remove("open");
+}
+
+
+function listenUsers(){
+
+ db.ref("users").on("value",snap=>{
+
+  users={};
+
+  snap.forEach(c=>{
+   users[c.key]=c.val();
+  });
+
+  renderUsers();
+
+ });
+
+}
+
+
+function renderUsers(){
+
+ const box=
+  document.getElementById("userList");
+
+ const q=
+  (
+   document.getElementById("userSearch")?.value||""
+  ).toLowerCase();
+
+ box.innerHTML="";
+
+ Object.keys(users)
+  .filter(id=>id!==uid)
+  .forEach(id=>{
+
+   const u=users[id];
+   const name=u.name||"Unique User";
+
+   if(
+    q &&
+    !name.toLowerCase().includes(q)
+   )return;
+
+   const row=document.createElement("div");
+
+   row.className="row";
+
+   row.onclick=()=>{
+    openChat(name,id);
+   };
+
+   row.innerHTML=`
+
+    <div class="avatar">
+     ${name.charAt(0).toUpperCase()}
+    </div>
+
+    <div class="rowText">
+
+     <div class="rowTitle">
+      ${escapeHtml(name)}
+     </div>
+
+     <div class="rowSub">
+      ${u.online?"Active now":"Offline"}
+     </div>
+
+    </div>
+
+    ${
+     u.online
+     ?'<span class="online"></span>'
+     :""
+    }
+
+   `;
+
+   box.appendChild(row);
+
+  });
+
+ if(!box.children.length){
+
+  box.innerHTML=
+   '<div class="empty">অন্য Unique users এখানে দেখাবে।</div>';
+
+ }
+
+}
+
+
+/* =====================================================
+   CHAT
+===================================================== */
+
+function openChat(name,id){
+
+ currentFriendId=id;
+
+ document.getElementById("chatName")
+  .textContent=name;
+
+ document.getElementById("chatAvatar")
+  .textContent=name.charAt(0).toUpperCase();
+
+ document.getElementById("chat")
+  .classList.add("open");
+
+ listenMessages();
+}
+
+
+function closeChat(){
+
+ document.getElementById("chat")
+  .classList.remove("open");
+}
+
+
+function chatId(a,b){
+
+ return[a,b].sort().join("_");
+
+}
+
+
+function listenMessages(){
+
+ if(!uid||!currentFriendId)return;
+
+ const ref=
+  db.ref(
+   "messages/"+chatId(uid,currentFriendId)
+  );
+
+ if(messageListener)
+  ref.off("value",messageListener);
+
+ messageListener=snap=>{
+
+  const box=
+   document.getElementById("chatBody");
+
+  box.innerHTML="";
+
+  snap.forEach(c=>{
+
+   const m=c.val();
+
+   const div=
+    document.createElement("div");
+
+   div.className=
+    "bubble "+
+    (m.uid===uid?"mine":"theirs");
+
+   div.textContent=m.text||"";
+
+   box.appendChild(div);
+
+  });
+
+  box.scrollTop=box.scrollHeight;
+
+ };
+
+ ref.limitToLast(100)
+  .on("value",messageListener);
+}
+
+
+function sendMessage(){
+
+ if(!uid||!currentFriendId)return;
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+ const input=
+  document.getElementById("messageInput");
+
+ const text=input.value.trim();
+
+ if(!text)return;
+
+ db.ref(
+  "messages/"+chatId(uid,currentFriendId)
+ ).push({
+
+  uid:uid,
+  text:text,
+  at:firebase.database.ServerValue.TIMESTAMP
+
+ });
+
+ input.value="";
+}
+
+
+/* =====================================================
+   REAL WEBRTC CALL
+===================================================== */
+
+async function startCall(type){
+
+ if(!currentFriendId){
+
+  showToast("আগে একজন user-এর chat খুলুন");
+  return;
 
-    steps:
+ }
+
+ if(!navigator.mediaDevices){
 
-      - name: Checkout
-        uses: actions/checkout@v4
+  showToast("Camera/Mic support নেই");
+  return;
 
-      - name: Check index.html
-        run: |
-          test -f index.html
-          echo "index.html found successfully"
+ }
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+ try{
 
-      - name: Create Android Project
-        shell: bash
-        run: |
+  localStream=
+   await navigator.mediaDevices.getUserMedia({
+    audio:true,
+    video:type==="video"
+   });
 
-          mkdir -p app/src/main/java/com/unique/app
-          mkdir -p app/src/main/res/values
-          mkdir -p app/src/main/res/drawable
-          mkdir -p app/src/main/assets
+  pc=
+   new RTCPeerConnection(rtcConfig);
 
-          cp index.html app/src/main/assets/index.html
+  localStream.getTracks()
+   .forEach(track=>{
+    pc.addTrack(track,localStream);
+   });
 
-          # =========================
-          # SETTINGS
-          # =========================
+  document.getElementById("localVideo")
+   .srcObject=localStream;
 
-          cat > settings.gradle <<'EOF'
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
+  document.getElementById("callScreen")
+   .classList.add("open");
 
-          dependencyResolutionManagement {
-              repositoriesMode.set(
-                  RepositoriesMode.FAIL_ON_PROJECT_REPOS
-              )
+  document.getElementById("callName")
+   .textContent=
+    users[currentFriendId]?.name||
+    "Calling...";
 
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
+  currentCallId=
+   uid+"_"+Date.now();
 
-          rootProject.name = "Unique"
+  const ref=
+   db.ref("calls/"+currentCallId);
 
-          include(":app")
-          EOF
+  pc.ontrack=e=>{
 
-          # =========================
-          # PROJECT GRADLE
-          # =========================
+   document.getElementById("remoteVideo")
+    .srcObject=e.streams[0];
 
-          cat > build.gradle <<'EOF'
-          plugins {
-              id 'com.android.application' version '8.9.2' apply false
-          }
-          EOF
+  };
 
-          # =========================
-          # GRADLE PROPERTIES
-          # =========================
+  pc.onicecandidate=e=>{
 
-          cat > gradle.properties <<'EOF'
-          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
-          android.useAndroidX=false
-          EOF
+   if(e.candidate){
 
-          # =========================
-          # APP GRADLE
-          # =========================
+    ref.child("callerCandidates")
+     .push(e.candidate.toJSON());
 
-          cat > app/build.gradle <<'EOF'
-          plugins {
-              id 'com.android.application'
-          }
+   }
 
-          android {
+  };
 
-              namespace 'com.unique.app'
+  const offer=
+   await pc.createOffer();
 
-              compileSdk 36
+  await pc.setLocalDescription(offer);
 
-              defaultConfig {
+  await ref.set({
 
-                  applicationId "com.unique.app"
+   caller:uid,
+   receiver:currentFriendId,
+   type:type,
+   offer:{
+    type:offer.type,
+    sdp:offer.sdp
+   },
+   status:"ringing",
+   createdAt:
+    firebase.database.ServerValue.TIMESTAMP
 
-                  minSdk 23
+  });
 
-                  targetSdk 36
+  ref.child("answer")
+   .on("value",async snap=>{
 
-                  versionCode 1
+    const answer=snap.val();
 
-                  versionName "1.0"
-              }
+    if(
+     answer &&
+     pc &&
+     !pc.currentRemoteDescription
+    ){
 
-              buildTypes {
+     await pc.setRemoteDescription(
+      new RTCSessionDescription(answer)
+     );
 
-                  debug {
-                      minifyEnabled false
-                  }
+    }
 
-                  release {
-                      minifyEnabled false
-                      shrinkResources false
-                  }
-              }
-          }
+   });
 
-          dependencies {
-          }
-          EOF
+  ref.child("calleeCandidates")
+   .on("child_added",snap=>{
 
-          # =========================
-          # COLORS
-          # =========================
+    const c=snap.val();
 
-          cat > app/src/main/res/values/colors.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
+    if(c&&pc){
 
-          <resources>
+     pc.addIceCandidate(
+      new RTCIceCandidate(c)
+     ).catch(()=>{});
 
-              <color name="unique_black">
-                  #050508
-              </color>
+    }
 
-          </resources>
-          EOF
+   });
 
-          # =========================
-          # APP THEME
-          # =========================
+  showToast("Calling...");
 
-          cat > app/src/main/res/values/styles.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
+ }catch(e){
 
-          <resources>
+  console.error(e);
 
-              <style
-                  name="AppTheme"
-                  parent="android:style/Theme.Material.Light.NoActionBar">
+  showToast(
+   "Camera ও Microphone permission দিন"
+  );
 
-                  <item name="android:fontFamily">
-                      sans
-                  </item>
+ }
 
-                  <item name="android:colorAccent">
-                      #FF0080
-                  </item>
+}
 
-                  <item name="android:navigationBarColor">
-                      #000000
-                  </item>
 
-                  <item name="android:statusBarColor">
-                      #050508
-                  </item>
+/* =====================================================
+   INCOMING CALL
+===================================================== */
 
-                  <item name="android:windowLightStatusBar">
-                      false
-                  </item>
+function listenIncomingCalls(){
 
-                  <item name="android:windowActionModeOverlay">
-                      true
-                  </item>
+ if(!uid)return;
 
-              </style>
+ db.ref("calls")
+  .on("child_added",snap=>{
 
-          </resources>
-          EOF
+   const call=snap.val();
 
-          # =========================
-          # UNIQUE OUTSIDE APP LOGO
-          # =========================
+   if(
+    call &&
+    call.receiver===uid &&
+    call.status==="ringing"
+   ){
 
-          cat > app/src/main/res/drawable/ic_unique_logo.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
+    incomingCallData={
+     id:snap.key,
+     ...call
+    };
 
-          <vector
-              xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="108dp"
-              android:height="108dp"
-              android:viewportWidth="512"
-              android:viewportHeight="512">
+    const caller=
+     users[call.caller]||{name:"Unique User"};
 
-              <!-- BLACK BACKGROUND -->
+    document.getElementById("incomingName")
+     .textContent=caller.name;
 
-              <path
-                  android:fillColor="#050508"
-                  android:pathData="
-                  M110,0
-                  L402,0
-                  Q512,0 512,110
-                  L512,402
-                  Q512,512 402,512
-                  L110,512
-                  Q0,512 0,402
-                  L0,110
-                  Q0,0 110,0
-                  Z" />
+    document.getElementById("incomingAvatar")
+     .textContent=
+      caller.name.charAt(0).toUpperCase();
 
-              <!-- BLUE U -->
+    document.getElementById("incomingType")
+     .textContent=
+      call.type==="video"
+      ?"Incoming video call"
+      :"Incoming audio call";
 
-              <path
-                  android:fillColor="#00E5FF"
-                  android:pathData="
-                  M145,120
-                  L203,120
-                  L203,292
-                  Q203,354 256,354
-                  Q309,354 309,292
-                  L309,120
-                  L367,120
-                  L367,295
-                  Q367,412 256,412
-                  Q145,412 145,295
-                  Z" />
+    document.getElementById("incoming")
+     .classList.add("open");
 
-              <!-- PINK PLAY -->
+   }
 
-              <path
-                  android:fillColor="#FF0080"
-                  android:pathData="
-                  M350,105
-                  L425,160
-                  L350,215
-                  Z" />
+  });
 
-          </vector>
-          EOF
+}
 
-          # =========================
-          # ANDROID MANIFEST
-          # =========================
 
-          cat > app/src/main/AndroidManifest.xml <<'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
+async function acceptIncoming(){
 
-          <manifest
-              xmlns:android="http://schemas.android.com/apk/res/android">
+ if(!incomingCallData)return;
 
-              <uses-permission
-                  android:name="android.permission.INTERNET" />
+ const call=incomingCallData;
 
-              <uses-permission
-                  android:name="android.permission.CAMERA" />
+ document.getElementById("incoming")
+  .classList.remove("open");
 
-              <uses-permission
-                  android:name="android.permission.RECORD_AUDIO" />
+ try{
 
-              <application
+  localStream=
+   await navigator.mediaDevices.getUserMedia({
+    audio:true,
+    video:call.type==="video"
+   });
 
-                  android:theme="@style/AppTheme"
+  pc=
+   new RTCPeerConnection(rtcConfig);
 
-                  android:label="Unique"
+  localStream.getTracks()
+   .forEach(track=>{
+    pc.addTrack(track,localStream);
+   });
 
-                  android:icon="@drawable/ic_unique_logo"
+  document.getElementById("localVideo")
+   .srcObject=localStream;
 
-                  android:roundIcon="@drawable/ic_unique_logo"
+  pc.ontrack=e=>{
 
-                  android:usesCleartextTraffic="true"
+   document.getElementById("remoteVideo")
+    .srcObject=e.streams[0];
 
-                  android:hardwareAccelerated="true">
+  };
 
-                  <activity
+  const ref=
+   db.ref("calls/"+call.id);
 
-                      android:name=".MainActivity"
+  pc.onicecandidate=e=>{
 
-                      android:screenOrientation="portrait"
+   if(e.candidate){
 
-                      android:exported="true">
+    ref.child("calleeCandidates")
+     .push(e.candidate.toJSON());
 
-                      <intent-filter>
+   }
 
-                          <action
-                              android:name="android.intent.action.MAIN" />
+  };
 
-                          <category
-                              android:name="android.intent.category.LAUNCHER" />
+  await pc.setRemoteDescription(
+   new RTCSessionDescription(call.offer)
+  );
 
-                      </intent-filter>
+  const answer=
+   await pc.createAnswer();
 
-                  </activity>
+  await pc.setLocalDescription(answer);
 
-              </application>
+  await ref.child("answer").set({
+   type:answer.type,
+   sdp:answer.sdp
+  });
 
-          </manifest>
-          EOF
+  await ref.update({
+   status:"connected"
+  });
 
-          # =========================
-          # MAIN ACTIVITY
-          # =========================
+  ref.child("callerCandidates")
+   .on("child_added",snap=>{
 
-          cat > app/src/main/java/com/unique/app/MainActivity.java <<'EOF'
-          package com.unique.app;
+    const c=snap.val();
 
-          import android.Manifest;
-          import android.app.Activity;
-          import android.os.Bundle;
-          import android.webkit.PermissionRequest;
-          import android.webkit.WebChromeClient;
-          import android.webkit.WebResourceRequest;
-          import android.webkit.WebResourceResponse;
-          import android.webkit.WebView;
-          import android.webkit.WebViewClient;
+    if(c){
 
-          import java.io.InputStream;
+     pc.addIceCandidate(
+      new RTCIceCandidate(c)
+     ).catch(()=>{});
 
-          public class MainActivity extends Activity {
+    }
 
-              private WebView webView;
+   });
 
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
+  document.getElementById("callName")
+   .textContent=
+    users[call.caller]?.name||
+    "Unique User";
 
-                  super.onCreate(savedInstanceState);
+  document.getElementById("callScreen")
+   .classList.add("open");
 
-                  requestPermissions(
-                      new String[] {
-                          Manifest.permission.CAMERA,
-                          Manifest.permission.RECORD_AUDIO
-                      },
-                      100
-                  );
+  currentCallId=call.id;
 
-                  webView = new WebView(this);
+ }catch(e){
 
-                  webView.getSettings()
-                      .setJavaScriptEnabled(true);
+  console.error(e);
+  showToast("Call accept হয়নি");
 
-                  webView.getSettings()
-                      .setDomStorageEnabled(true);
+ }
 
-                  webView.getSettings()
-                      .setDatabaseEnabled(true);
+}
 
-                  webView.getSettings()
-                      .setMediaPlaybackRequiresUserGesture(false);
 
-                  webView.getSettings()
-                      .setAllowFileAccess(true);
+async function rejectIncoming(){
 
-                  webView.getSettings()
-                      .setAllowContentAccess(true);
+ if(!incomingCallData)return;
 
-                  /*
-                   * Load index.html from Android assets.
-                   */
+ await db.ref(
+  "calls/"+incomingCallData.id
+ ).update({
+  status:"rejected"
+ });
 
-                  webView.setWebViewClient(
-                      new WebViewClient() {
+ incomingCallData=null;
 
-                          @Override
-                          public WebResourceResponse
-                          shouldInterceptRequest(
-                              WebView view,
-                              WebResourceRequest request
-                          ) {
+ document.getElementById("incoming")
+  .classList.remove("open");
+}
 
-                              String url =
-                                  request.getUrl().toString();
 
-                              if (
-                                  url.startsWith(
-                                      "https://appassets.androidplatform.net/"
-                                  )
-                              ) {
+/* =====================================================
+   CALL CONTROLS
+===================================================== */
 
-                                  try {
+function toggleMute(){
 
-                                      String path =
-                                          request.getUrl()
-                                              .getPath();
+ if(!localStream)return;
 
-                                      if (
-                                          path == null ||
-                                          path.equals("/")
-                                      ) {
+ const track=
+  localStream.getAudioTracks()[0];
 
-                                          path =
-                                              "/index.html";
-                                      }
+ if(track)
+  track.enabled=!track.enabled;
 
-                                      if (
-                                          path.startsWith(
-                                              "/assets/"
-                                          )
-                                      ) {
+ showToast(
+  track.enabled
+  ?"Microphone ON"
+  :"Microphone OFF"
+ );
+}
 
-                                          path =
-                                              path.substring(8);
-                                      }
 
-                                      InputStream input =
-                                          getAssets()
-                                              .open(path);
+function toggleCamera(){
 
-                                      return new WebResourceResponse(
-                                          "text/html",
-                                          "UTF-8",
-                                          input
-                                      );
+ if(!localStream)return;
 
-                                  } catch (Exception e) {
+ const track=
+  localStream.getVideoTracks()[0];
 
-                                      return null;
-                                  }
-                              }
+ if(track)
+  track.enabled=!track.enabled;
 
-                              return null;
-                          }
-                      }
-                  );
+ showToast(
+  track.enabled
+  ?"Camera ON"
+  :"Camera OFF"
+ );
+}
 
-                  webView.setWebChromeClient(
-                      new WebChromeClient() {
 
-                          @Override
-                          public void onPermissionRequest(
-                              final PermissionRequest request
-                          ) {
+async function hangupCall(){
 
-                              runOnUiThread(
-                                  new Runnable() {
+ if(currentCallId){
 
-                                      @Override
-                                      public void run() {
+  await db.ref(
+   "calls/"+currentCallId
+  ).update({
+   status:"ended",
+   endedAt:
+    firebase.database.ServerValue.TIMESTAMP
+  }).catch(()=>{});
 
-                                          request.grant(
-                                              request
-                                                  .getResources()
-                                          );
-                                      }
-                                  }
-                              );
-                          }
-                      }
-                  );
+ }
 
-                  webView.loadUrl(
-                      "file:///android_asset/index.html"
-                  );
+ if(localStream){
 
-                  setContentView(webView);
-              }
+  localStream.getTracks()
+   .forEach(t=>t.stop());
 
-              @Override
-              public void onBackPressed() {
+  localStream=null;
+ }
 
-                  if (webView.canGoBack()) {
+ if(pc){
 
-                      webView.goBack();
+  pc.close();
+  pc=null;
 
-                  } else {
+ }
 
-                      super.onBackPressed();
-                  }
-              }
-          }
-          EOF
+ document.getElementById("remoteVideo")
+  .srcObject=null;
 
-      # =========================
-      # INSTALL GRADLE
-      # =========================
+ document.getElementById("localVideo")
+  .srcObject=null;
 
-      - name: Install Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.11.1'
+ document.getElementById("callScreen")
+  .classList.remove("open");
 
-      # =========================
-      # BUILD APK
-      # =========================
+ currentCallId=null;
+}
 
-      - name: Build APK
-        run: |
-          gradle assembleDebug --no-daemon
 
-      # =========================
-      # BUILD AAB
-      # =========================
+/* =====================================================
+   HISTORY
+===================================================== */
 
-      - name: Build AAB
-        run: |
-          gradle bundleRelease --no-daemon
+function addHistory(video){
 
-      # =========================
-      # UPLOAD APK
-      # =========================
+ if(!uid||!video)return;
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Unique-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+ db.ref("history/"+uid+"/"+video.id)
+  .set({
+   title:video.title,
+   channel:video.channel,
+   thumb:video.thumb||"",
+   at:firebase.database.ServerValue.TIMESTAMP
+  });
+}
 
-      # =========================
-      # UPLOAD AAB
-      # =========================
 
-      - name: Upload AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: Unique-release-aab
-          path: app/build/outputs/bundle/release/app-release.aab
+function loadHistory(){
+
+ if(!uid)return;
+
+}
+
+
+function openHistory(){
+
+ const title="Watch History";
+
+ const html=`
+  <div class="modal open" id="historyTemp">
+   <div class="modalCard">
+
+    <div class="modalHead">
+     <b>${title}</b>
+     <button class="close"
+      onclick="document.getElementById('historyTemp').remove()">
+      ×
+     </button>
+    </div>
+
+    <div id="historyList"></div>
+
+   </div>
+  </div>
+ `;
+
+ document.body.insertAdjacentHTML("beforeend",html);
+
+ const box=document.getElementById("historyList");
+
+ db.ref("history/"+uid)
+  .orderByChild("at")
+  .limitToLast(50)
+  .once("value")
+  .then(snap=>{
+
+   box.innerHTML="";
+
+   const arr=[];
+
+   snap.forEach(c=>{
+    arr.unshift(c.val());
+   });
+
+   if(!arr.length){
+
+    box.innerHTML=
+     '<div class="empty">History খালি</div>';
+
+    return;
+   }
+
+   arr.forEach(v=>{
+
+    box.innerHTML+=`
+     <div class="row">
+      <div class="avatar">
+       ${(v.channel||"U").charAt(0)}
+      </div>
+      <div class="rowText">
+       <div class="rowTitle">
+        ${escapeHtml(v.title)}
+       </div>
+       <div class="rowSub">
+        ${escapeHtml(v.channel||"Unique")}
+       </div>
+      </div>
+     </div>
+    `;
+
+   });
+
+  });
+
+}
+
+
+/* =====================================================
+   PLAYLIST
+===================================================== */
+
+function openPlaylists(){
+
+ const html=`
+  <div class="modal open" id="playlistTemp">
+
+   <div class="modalCard">
+
+    <div class="modalHead">
+     <b>My Playlists</b>
+
+     <button class="close"
+      onclick="document.getElementById('playlistTemp').remove()">
+      ×
+     </button>
+    </div>
+
+    <div class="row">
+     <div>📚</div>
+     <div class="rowText">
+      <div class="rowTitle">Favorite Videos</div>
+      <div class="rowSub">Public playlist</div>
+     </div>
+    </div>
+
+    <div class="row">
+     <div>🎮</div>
+     <div class="rowText">
+      <div class="rowTitle">Gaming Playlist</div>
+      <div class="rowSub">Private playlist</div>
+     </div>
+    </div>
+
+    <div class="row">
+     <div>🎵</div>
+     <div class="rowText">
+      <div class="rowTitle">Music Playlist</div>
+      <div class="rowSub">Public playlist</div>
+     </div>
+    </div>
+
+    <div class="form">
+     <button class="primary"
+      onclick="createPlaylist()">
+      ＋ Create Playlist
+     </button>
+    </div>
+
+   </div>
+  </div>
+ `;
+
+ document.body.insertAdjacentHTML(
+  "beforeend",html
+ );
+
+}
+
+
+function createPlaylist(){
+
+ if(!uid)return;
+
+ const name=
+  prompt("Playlist name লিখুন");
+
+ if(!name)return;
+
+ db.ref("playlists/"+uid)
+  .push({
+   name:name,
+   privacy:"public",
+   createdAt:
+    firebase.database.ServerValue.TIMESTAMP
+  });
+
+ showToast("Playlist created");
+}
+
+
+/* =====================================================
+   NOTIFICATIONS
+===================================================== */
+
+function openNotifications(){
+
+ const html=`
+  <div class="modal open" id="notificationTemp">
+
+   <div class="modalCard">
+
+    <div class="modalHead">
+     <b>Notifications</b>
+
+     <button class="close"
+      onclick="document.getElementById('notificationTemp').remove()">
+      ×
+     </button>
+    </div>
+
+    <div class="row">
+     <div>🔥</div>
+     <div class="rowText">
+      <div class="rowTitle">Welcome to Unique</div>
+      <div class="rowSub">Your Unique journey starts here</div>
+     </div>
+    </div>
+
+    <div class="row">
+     <div>👍</div>
+     <div class="rowText">
+      <div class="rowTitle">Likes</div>
+      <div class="rowSub">People can like your videos</div>
+     </div>
+    </div>
+
+    <div class="row">
+     <div>💬</div>
+     <div class="rowText">
+      <div class="rowTitle">Comments</div>
+      <div class="rowSub">New comments will appear here</div>
+     </div>
+    </div>
+
+    <div class="row">
+     <div>🔔</div>
+     <div class="rowText">
+      <div class="rowTitle">Subscriptions</div>
+      <div class="rowSub">New subscribers will appear here</div>
+     </div>
+    </div>
+
+   </div>
+  </div>
+ `;
+
+ document.body.insertAdjacentHTML(
+  "beforeend",html
+}
+
+
+/* =====================================================
+   AI
+===================================================== */
+
+function openAI(){
+
+ const html=`
+  <div class="modal open" id="aiTemp">
+
+   <div class="modalCard">
+
+    <div class="modalHead">
+     <b>🤖 Unique AI</b>
+
+     <button class="close"
+      onclick="document.getElementById('aiTemp').remove()">
+      ×
+     </button>
+    </div>
+
+    <div class="form">
+
+     <input id="aiTopic"
+      placeholder="যেমন: Free Fire gameplay">
+
+     <button class="primary"
+      onclick="generateAI()">
+      Generate
+     </button>
+
+     <div id="aiResult"
+      style="margin-top:15px;color:#ddd;line-height:1.7">
+     </div>
+
+    </div>
+
+   </div>
+
+  </div>
+ `;
+
+ document.body.insertAdjacentHTML(
+  "beforeend",html
+ );
+}
+
+
+function generateAI(){
+
+ const topic=
+  document.getElementById("aiTopic").value.trim();
+
+ if(!topic)return;
+
+ document.getElementById("aiResult").innerHTML=`
+
+ <b>🎬 Title idea</b><br>
+ ${escapeHtml(topic)} — The Ultimate Experience 🔥
+
+ <br><br>
+
+ <b>📝 Description</b><br>
+ আজকের ভিডিওতে ${escapeHtml(topic)}
+ নিয়ে বিস্তারিত দেখানো হয়েছে।
+
+ <br><br>
+
+ <b># Hashtags</b><br>
+ #Unique #Video #Trending #Bangladesh #Shorts
+
+ <br><br>
+
+ <b>💡 Shorts idea</b><br>
+ প্রথম ৩ সেকেন্ডে সবচেয়ে interesting অংশ দেখান।
+ `;
+
+}
+
+
+/* =====================================================
+   SETTINGS
+===================================================== */
+
+function openSettings(){
+
+ const html=`
+  <div class="modal open" id="settingsTemp">
+
+   <div class="modalCard">
+
+    <div class="modalHead">
+     <b>Settings</b>
+
+     <button class="close"
+      onclick="document.getElementById('settingsTemp').remove()">
+      ×
+     </button>
+    </div>
+
+    <div class="setting">
+     <div class="settingText">
+      <b>Notifications</b>
+      <span>Push notifications</span>
+     </div>
+     <div class="switch on"><i></i></div>
+    </div>
+
+    <div class="setting">
+     <div class="settingText">
+      <b>Dark mode</b>
+      <span>Unique dark interface</span>
+     </div>
+     <div class="switch on"><i></i></div>
+    </div>
+
+    <div class="setting">
+     <div class="settingText">
+      <b>Privacy</b>
+      <span>Manage your privacy</span>
+     </div>
+     <div>›</div>
+    </div>
+
+    <div class="setting">
+     <div class="settingText">
+      <b>Language</b>
+      <span>বাংলা / English</span>
+     </div>
+     <div>›</div>
+    </div>
+
+   </div>
+  </div>
+ `;
+
+ document.body.insertAdjacentHTML(
+  "beforeend",html
+}
+
+
+/* =====================================================
+   MY VIDEOS
+===================================================== */
+
+function openMyVideos(){
+
+ const html=`
+  <div class="modal open" id="myVideosTemp">
+
+   <div class="modalCard">
+
+    <div class="modalHead">
+     <b>Your Videos</b>
+
+     <button class="close"
+      onclick="document.getElementById('myVideosTemp').remove()">
+      ×
+     </button>
+    </div>
+
+    <div id="myVideoList"></div>
+
+   </div>
+  </div>
+ `;
+
+ document.body.insertAdjacentHTML(
+  "beforeend",html
+ );
+
+ const box=
+  document.getElementById("myVideoList");
+
+ db.ref("videos")
+  .orderByChild("uid")
+  .equalTo(uid)
+  .once("value")
+  .then(snap=>{
+
+   box.innerHTML="";
+
+   if(!snap.exists()){
+
+    box.innerHTML=
+     '<div class="empty">তোমার কোনো video নেই</div>';
+
+    return;
+   }
+
+   snap.forEach(c=>{
+
+    const v=c.val();
+
+    box.innerHTML+=`
+     <div class="row">
+      <div class="avatar">
+       ${(v.title||"U").charAt(0)}
+      </div>
+
+      <div class="rowText">
+       <div class="rowTitle">
+        ${escapeHtml(v.title)}
+       </div>
+       <div class="rowSub">
+        ${v.views||0} views
+       </div>
+      </div>
+     </div>
+    `;
+
+   });
+
+  });
+}
+
+
+/* =====================================================
+   SHORTS
+===================================================== */
+
+function shortLike(btn){
+
+ btn.style.color=
+  btn.style.color
+  ?""
+  :"#ff0033";
+
+ showToast("Short liked");
+}
+
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function safeKey(s){
+
+ return btoa(
+  unescape(
+   encodeURIComponent(s)
+  )
+ ).replace(/[.#$[\]/]/g,"_")
+  .slice(0,80);
+
+}
+
+
+function escapeHtml(s){
+
+ return String(s??"")
+  .replace(/[&<>"']/g,m=>({
+
+   "&":"&amp;",
+   "<":"&lt;",
+   ">":"&gt;",
+   '"':"&quot;",
+   "'":"&#39;"
+
+  }[m]));
+
+}
+
+
+function escapeAttr(s){
+
+ return String(s??"")
+  .replace(/'/g,"\\'");
+
+}
+
+
+function videoMore(){
+
+ showToast(
+  "Save • Share • Report • Not interested"
+ );
+
+}
+
+
+function showToast(text){
+
+ const t=
+  document.getElementById("toast");
+
+ t.textContent=text;
+ t.classList.add("show");
+
+ clearTimeout(window.toastTimer);
+
+ window.toastTimer=
+  setTimeout(()=>{
+   t.classList.remove("show");
+  },2300);
+
+}
+
+</script>
+
+</body>
+</html>
