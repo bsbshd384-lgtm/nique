@@ -1,1 +1,330 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unique - Advanced Settings</title>
+    <style>
+        :root {
+            --bg-color: #0f0f0f;
+            --card-bg: #1f1f1f;
+            --text-color: #ffffff;
+            --accent-color: #ff0050;
+            --secondary-text: #aaaaaa;
+            --border-color: #333333;
+        }
 
+        /* Light Theme Options */
+        body.light-theme {
+            --bg-color: #f9f9f9;
+            --card-bg: #ffffff;
+            --text-color: #0f0f0f;
+            --secondary-text: #606060;
+            --border-color: #e5e5e5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .settings-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .settings-header h1 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--accent-color);
+        }
+
+        .section-title {
+            font-size: 18px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            color: var(--accent-color);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .setting-info h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .setting-info p {
+            margin: 4px 0 0;
+            font-size: 13px;
+            color: var(--secondary-text);
+        }
+
+        /* Form elements */
+        select, input[type="text"], input[type="number"] {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        /* Toggle Switch Styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .btn-danger {
+            background-color: #ff3333;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-danger:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="settings-container">
+    <div class="settings-header">
+        <h1>⚙️ Unique Settings</h1>
+    </div>
+
+    <!-- 🎨 Appearance & Theme Settings -->
+    <div class="section-title">🎨 থিম ও অ্যাপেয়ারেন্স (Appearance)</div>
+    
+    <div class="setting-item">
+        <div class="setting-info">
+            <h3>ডার্ক মোড (Dark Theme)</h3>
+            <p>অ্যাপের থিম লাইট বা ডার্ক এ পরিবর্তন করুন</p>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="themeToggle" checked onchange="toggleTheme()">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="setting-item">
+        <div class="setting-info">
+            <h3>অ্যাকসেন্ট কালার (Accent Color)</h3>
+            <p>আপনার পছন্দের ব্র্যান্ড কালার বেছে নিন</p>
+        </div>
+        <select id="accentColor" onchange="changeAccentColor(this.value)">
+            <option value="#ff0050">Neon Pink (Default)</option>
+            <option value="#007bff">Electric Blue</option>
+            <option value="#0000ff">Purple</option>
+            <option value="#00cc66">Green</option>
+        </select>
+    </div>
+
+    <!-- 🎬 Playback & Data Control -->
+    <div class="section-title">🎬 প্লেব্যাক ও ডাটা সেভার (Playback & Data)</div>
+
+    <div class="setting-item">
+        <div class="setting-info">
+            <h3>ডিফোল্ট ভিডিও কোয়ালিটি</h3>
+            <p>ভিডিও চালানোর সময় পছন্দসই রেজোলিউশন</p>
+        </div>
+        <select id="videoQuality">
+            <option value="auto">Auto (Recommended)</option>
+            <option value="1080p">1080p (Full HD)</option>
+            <option value="720p">720p (HD)</option>
+            <option value="360p">360p (Data Saver)</option>
+        </select>
+    </div>
+
+    <div class="setting-item">
+        <div class="setting-info">
+            <h3>অটো-প্লে (Autoplay)</h3>
+            <p>একটি ভিডিও শেষ হলে পরবর্তী ভিডিও স্বয়ংক্রিয়ভাবে প্লে হবে</p>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="autoplayToggle" checked>
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="setting-item">
+        <div class="setting-info">
+            <h3>ডাটা সেভার মোড (Data Saver)</h3>
+            <p>মোবাইল ডাটায় হাই-রেজোলিউশন ও পিকচার-ইন-পিকচার বন্ধ রাখবে</p>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="dataSaverToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- 🔔 Notification Settings -->
+    <div class="section-title">🔔 নোটিফিকেশন সেটিংস (Notifications)</div>
+
+    <div class="setting-item">
+        <div class="setting-info">
+            <h3>পুশ নোটিফিকেশন (Push Notifications)</h3>
+            <p>নতুন ভিডিও, লাইক ও কমেন্টের নোটিফিকেশন পান</p>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="pushNotifToggle" checked>
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="setting-item">
+        <div class="setting-info">
+            <h3>Do Not Disturb (DND)</h3>
+            <p>নির্দিষ্ট সময়ের মধ্যে নোটিফিকেশন মিউট রাখুন</p>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="dndToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <!-- 🔒 Privacy & Security -->
+    <div class="section-title">🔒 প্রাইভেসি ও সিকিউরিটি (Privacy & Security)</div>
+
+    <div class="setting-item">
+        <div class="setting-info">
+            <h3>টু-ফ্যাক্টর অথেন্টিকেশন (2FA)</h3>
+            <p>আপনার একাউন্ট অতিরিক্ত সুরক্ষিত রাখুন</p>
+        </div>
+        <label class="switch">
+            <input type="checkbox" id="twoFactorToggle">
+            <span class="slider"></span>
+        </label>
+    </div>
+
+    <div class="setting-item">
+        <div class="setting-info">
+            <h3>ওয়াচ হিস্ট্রি মুছুন (Clear Watch History)</h3>
+            <p>আপনার দেখা সব ভিডিওর তথ্য মুছে ফেলুন</p>
+        </div>
+        <button class="btn-danger" onclick="clearHistory()">Clear History</button>
+    </div>
+
+    <!-- ⏳ Digital Wellbeing -->
+    <div class="section-title">⏳ ডিজিটাল ওয়েলবিং (Digital Wellbeing)</div>
+
+    <div class="setting-item">
+        <div class="setting-info">
+            <h3>বিরতির রিমাইন্ডার (Take a Break)</h3>
+            <p>একটানা দেখার পর বিরতির সতর্কবার্তা দিন (মিনিট)</p>
+        </div>
+        <input type="number" id="breakInterval" value="60" min="15" max="240" style="width: 70px;">
+    </div>
+</div>
+
+<script>
+    // Theme Switcher Function
+    function toggleTheme() {
+        const isDark = document.getElementById('themeToggle').checked;
+        if(isDark) {
+            document.body.classList.remove('light-theme');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.body.classList.add('light-theme');
+            localStorage.setItem('theme', 'light');
+        }
+    }
+
+    // Accent Color Switcher Function
+    function changeAccentColor(color) {
+        document.documentElement.style.setProperty('--accent-color', color);
+        localStorage.setItem('accentColor', color);
+    }
+
+    // Clear History Function
+    function clearHistory() {
+        if(confirm("আপনি কি নিশ্চিত যে আপনার সমস্ত ওয়াচ হিস্ট্রি মুছে ফেলতে চান?")) {
+            alert("আপনার হিস্ট্রি সফলভাবে মুছে ফেলা হয়েছে!");
+        }
+    }
+
+    // Load saved settings from LocalStorage
+    window.onload = function() {
+        // Load Saved Theme
+        const savedTheme = localStorage.getItem('theme');
+        if(savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+            document.getElementById('themeToggle').checked = false;
+        }
+
+        // Load Saved Accent Color
+        const savedColor = localStorage.getItem('accentColor');
+        if(savedColor) {
+            document.documentElement.style.setProperty('--accent-color', savedColor);
+            document.getElementById('accentColor').value = savedColor;
+        }
+    };
+</script>
+
+</body>
+  </html>
